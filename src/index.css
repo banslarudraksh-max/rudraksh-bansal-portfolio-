@@ -1,0 +1,241 @@
+@import "tailwindcss";
+
+@layer base {
+  :root {
+    --bg-primary: #090a0f;
+    --bg-secondary: #11131a;
+    --bg-card: #141722;
+    --border-subtle: #1f2433;
+    --text-primary: #f3f4f6;
+    --text-muted: #9ca3af;
+    --accent-emerald: #10b981;
+    --accent-teal: #14b8a6;
+  }
+
+  .light {
+    --bg-primary: #f8fafc;
+    --bg-secondary: #ffffff;
+    --bg-card: #f1f5f9;
+    --border-subtle: #e2e8f0;
+    --text-primary: #0f172a;
+    --text-muted: #64748b;
+  }
+
+  html {
+    scroll-behavior: smooth;
+    font-family: 'Plus Jakarta Sans', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+
+  code, pre, .font-mono {
+    font-family: 'JetBrains Mono', ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  }
+}
+
+/* Light mode overrides */
+.light {
+  background-color: #f8fafc !important;
+  color: #0f172a !important;
+}
+
+.light .bg-neutral-950,
+.light .bg-neutral-950\/95,
+.light .bg-neutral-950\/90,
+.light .bg-neutral-950\/85,
+.light .bg-neutral-950\/80,
+.light .bg-neutral-950\/70,
+.light .bg-neutral-950\/60,
+.light .bg-neutral-950\/50,
+.light .bg-neutral-950\/40 {
+  background-color: #f8fafc !important;
+}
+
+.light .bg-neutral-900,
+.light .bg-neutral-900\/90,
+.light .bg-neutral-900\/80,
+.light .bg-neutral-900\/60,
+.light .bg-neutral-900\/50,
+.light .bg-neutral-900\/40 {
+  background-color: #ffffff !important;
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.05), 0 1px 2px -1px rgba(0, 0, 0, 0.05);
+}
+
+.light .bg-neutral-800,
+.light .bg-neutral-800\/90,
+.light .bg-neutral-800\/80,
+.light .bg-neutral-800\/70,
+.light .bg-neutral-800\/60,
+.light .bg-neutral-800\/50,
+.light .bg-neutral-800\/40,
+.light .bg-neutral-800\/30 {
+  background-color: #f1f5f9 !important;
+}
+
+.light .border-neutral-800,
+.light .border-neutral-800\/80,
+.light .border-neutral-800\/70,
+.light .border-neutral-800\/60,
+.light .border-neutral-800\/50 {
+  border-color: #e2e8f0 !important;
+}
+
+.light .border-neutral-700,
+.light .border-neutral-700\/80,
+.light .border-neutral-700\/60,
+.light .border-neutral-700\/50 {
+  border-color: #cbd5e1 !important;
+}
+
+.light .text-white {
+  color: #0f172a !important;
+}
+
+.light .text-neutral-100 {
+  color: #0f172a !important;
+}
+
+.light .text-neutral-200 {
+  color: #1e293b !important;
+}
+
+.light .text-neutral-300 {
+  color: #334155 !important;
+}
+
+.light .text-neutral-400 {
+  color: #64748b !important;
+}
+
+.light .text-neutral-500 {
+  color: #94a3b8 !important;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #0d0f15;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #252a38;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #363d50;
+}
+
+/* Print Stylesheet for A4 Resume */
+@media print {
+  @page {
+    size: A4 portrait;
+    margin: 12mm 15mm;
+  }
+
+  /* Hide entire page chrome */
+  body {
+    background: #ffffff !important;
+    color: #0f172a !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
+  body * {
+    visibility: hidden;
+  }
+
+  /* Make only the resume printable content visible and correctly positioned */
+  #resume-printable-content,
+  #resume-printable-content * {
+    visibility: visible !important;
+  }
+
+  #resume-printable-content {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    color: #0f172a !important;
+    display: block !important;
+    overflow: visible !important;
+    box-shadow: none !important;
+    border: none !important;
+  }
+
+  /* Hide modal headers, buttons, footers and site UI */
+  #resume-modal-top-bar,
+  #resume-modal-footer-bar,
+  #resume-close-btn,
+  #resume-print-btn,
+  #resume-save-pdf-btn,
+  #navbar,
+  nav,
+  header,
+  main,
+  footer,
+  #back-to-top-btn,
+  .no-print {
+    display: none !important;
+    visibility: hidden !important;
+  }
+
+  /* Contrast and color adjustments for crisp A4 paper printing */
+  #resume-printable-content .text-white,
+  #resume-printable-content .text-neutral-100,
+  #resume-printable-content .text-neutral-200 {
+    color: #0f172a !important;
+  }
+
+  #resume-printable-content .text-neutral-300,
+  #resume-printable-content .text-neutral-400 {
+    color: #334155 !important;
+  }
+
+  #resume-printable-content .text-emerald-400,
+  #resume-printable-content .text-emerald-300 {
+    color: #059669 !important;
+  }
+
+  #resume-printable-content .bg-neutral-900\/60,
+  #resume-printable-content .bg-neutral-900\/50,
+  #resume-printable-content .bg-neutral-900\/40,
+  #resume-printable-content .bg-neutral-950\/50,
+  #resume-printable-content .bg-neutral-950 {
+    background-color: #f8fafc !important;
+    border-color: #e2e8f0 !important;
+  }
+
+  #resume-printable-content .bg-neutral-800\/80,
+  #resume-printable-content .bg-neutral-800\/70,
+  #resume-printable-content .bg-neutral-800 {
+    background-color: #f1f5f9 !important;
+    color: #1e293b !important;
+    border-color: #cbd5e1 !important;
+  }
+
+  #resume-printable-content .border-neutral-800,
+  #resume-printable-content .border-neutral-800\/80,
+  #resume-printable-content .border-neutral-700\/60 {
+    border-color: #e2e8f0 !important;
+  }
+
+  #resume-printable-content a {
+    color: #059669 !important;
+    text-decoration: underline !important;
+  }
+
+  /* Prevent sections from splitting awkwardly across pages */
+  #resume-printable-content > div,
+  #resume-printable-content .rounded-xl {
+    break-inside: avoid !important;
+    page-break-inside: avoid !important;
+  }
+}
+
