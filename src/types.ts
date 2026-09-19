@@ -20,10 +20,17 @@ export interface ProjectItem {
   category: string;
   description: string;
   fullDescription: string;
-  keyFeatures: string[];
+  keyFeatures?: string[];
   technologies: string[];
   githubPlaceholder: string;
   demoPlaceholder?: string;
+  mainImageUrl?: string;
+  imageUrl?: string;
+  screenshots?: string[];
+  status?: string;
+  isFeatured?: boolean;
+  isVisible?: boolean;
+  displayOrder?: number;
   codeSnippetPreview?: {
     language: string;
     filename: string;
@@ -32,24 +39,53 @@ export interface ProjectItem {
 }
 
 export interface HighlightCard {
+  id?: string;
   title: string;
   subtitle: string;
   description: string;
   iconName: string;
+  displayOrder?: number;
 }
 
 export interface ValueCard {
+  id?: string;
   title: string;
   description: string;
   iconName: string;
 }
 
 export interface EducationMilestone {
+  id?: string;
   degree: string;
   institution: string;
+  university?: string;
   currentSemester: string;
   period: string;
+  startYear?: string;
+  endYear?: string;
   specialization: string;
   description: string;
-  coursework: string[];
+  cgpaGrade?: string;
+  coursework?: string[];
+  displayOrder?: number;
+}
+
+export interface ResumeRecord {
+  id: string;
+  fileName: string;
+  fileUrl: string;
+  fileSize?: string;
+  version: string;
+  isActive: boolean;
+  createdAt?: string;
+}
+
+export interface SocialLinkRecord {
+  id: string;
+  platform: string;
+  url: string;
+  displayText?: string;
+  icon?: string;
+  displayOrder?: number;
+  isActive: boolean;
 }

@@ -21,10 +21,10 @@ export const WhatIBring: React.FC = () => {
   };
 
   return (
-    <section id="what-i-bring" className="py-20 sm:py-28 relative">
+    <section id="what-i-bring" className="py-10 sm:py-14 md:py-16 relative">
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
         {/* Section Header */}
-        <div className="space-y-2 mb-12">
+        <div className="space-y-2 mb-6 sm:mb-8 md:mb-10">
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
             <span className="text-xs font-mono tracking-widest text-emerald-400 uppercase">
@@ -40,12 +40,12 @@ export const WhatIBring: React.FC = () => {
         </div>
 
         {/* 5 Cards Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
           {WHAT_I_BRING.map((item, idx) => (
             <div
               key={idx}
               id={`value-card-${idx}`}
-              className={`p-6 rounded-2xl bg-neutral-900/40 border border-neutral-800/80 hover:border-neutral-700/80 transition-all duration-300 flex flex-col justify-between group ${
+              className={`p-5 sm:p-6 rounded-2xl bg-neutral-900/40 border border-neutral-800/80 hover:border-neutral-700/80 transition-all duration-300 flex flex-col justify-between group ${
                 idx === 4 ? 'md:col-span-2 lg:col-span-1' : ''
               }`}
             >

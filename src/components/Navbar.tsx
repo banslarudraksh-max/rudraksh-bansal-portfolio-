@@ -6,6 +6,8 @@ interface NavbarProps {
   onOpenResume: () => void;
   isDark: boolean;
   onToggleTheme: () => void;
+  name?: string;
+  roleTag?: string;
 }
 
 const NAV_LINKS = [
@@ -21,6 +23,8 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenResume,
   isDark,
   onToggleTheme,
+  name = PERSONAL_INFO.name,
+  roleTag = 'CSE (AI-ML) @ AKTU',
 }) => {
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -56,6 +60,14 @@ export const Navbar: React.FC<NavbarProps> = ({
     }
   };
 
+  const initials = name
+    .split(' ')
+    .filter(Boolean)
+    .map((n) => n[0])
+    .join('')
+    .slice(0, 2)
+    .toUpperCase();
+
   return (
     <header
       id="main-navbar"
@@ -77,34 +89,36 @@ export const Navbar: React.FC<NavbarProps> = ({
           id="nav-brand-logo"
         >
           <div className="w-8 h-8 rounded-lg bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 font-mono text-xs font-bold transition-transform group-hover:scale-105">
-            RB
+            {initials || 'RB'}
           </div>
           <div className="flex flex-col">
             <span className="text-sm sm:text-base font-bold text-white tracking-tight group-hover:text-emerald-300 transition-colors">
-              {PERSONAL_INFO.name}
+              {name}
             </span>
             <span className="text-[10px] font-mono text-neutral-400 hidden sm:inline-block">
-              CSE (AI-ML) @ AKTU
+              {roleTag}
             </span>
           </div>
         </a>
 
-        {/* Desktop Nav Items */}
-        <nav className="hidden lg:flex items-center gap-1 bg-neutral-900/60 border border-neutral-800/70 px-3 py-1.5 rounded-full backdrop-blur-sm">
+        {/* Desktop Nav Links */}
+        <nav className="hidden md:flex items-center gap-1 bg-neutral-900/60 p-1.5 rounded-full border border-neutral-800/80 backdrop-blur-md">
           {NAV_LINKS.map((link) => {
-            const isActive = activeSection === link.href.substring(1);
+            const sectionId = link.href.replace('#', '');
+            const isActive = activeSection === sectionId;
+
             return (
               <a
-                key={link.label}
+                key={link.href}
                 href={link.href}
                 onClick={(e) => {
                   e.preventDefault();
                   handleNavClick(link.href);
                 }}
-                className={`px-3 py-1 text-xs font-medium rounded-full transition-all duration-200 ${
+                className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition-all ${
                   isActive
-                    ? 'text-emerald-400 bg-emerald-500/10 font-semibold'
-                    : 'text-neutral-300 hover:text-white hover:bg-neutral-800/50'
+                    ? 'bg-neutral-800 text-white shadow-sm font-semibold'
+                    : 'text-neutral-400 hover:text-neutral-200'
                 }`}
               >
                 {link.label}
@@ -113,43 +127,24 @@ export const Navbar: React.FC<NavbarProps> = ({
           })}
         </nav>
 
-        {/* Action Controls */}
-        <div className="hidden sm:flex items-center gap-2.5">
-          <button
-            onClick={onToggleTheme}
-            id="theme-toggle-btn"
-            title={isDark ? "Switch to Light Theme" : "Switch to Dark Theme"}
-            className="p-2 rounded-xl text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800/80 border border-neutral-800 transition-colors"
-            aria-label="Toggle theme"
-          >
-            {isDark ? <Sun className="w-4 h-4 text-amber-300" /> : <Moon className="w-4 h-4 text-emerald-400" />}
-          </button>
-
+        {/* Right CTA Actions */}
+        <div className="flex items-center gap-2.5">
+          {/* Resume Quick Trigger */}
           <button
             onClick={onOpenResume}
             id="nav-resume-btn"
-            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 text-xs font-medium text-white bg-emerald-600 hover:bg-emerald-500 rounded-xl transition-all shadow-sm active:scale-95"
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-neutral-900 hover:bg-neutral-800 border border-neutral-800 hover:border-neutral-700 text-xs font-medium text-neutral-200 hover:text-white transition-all active:scale-95 shadow-sm"
           >
-            <FileText className="w-3.5 h-3.5" />
-            <span>Resume</span>
-          </button>
-        </div>
-
-        {/* Mobile Hamburger & Theme */}
-        <div className="flex lg:hidden items-center gap-2">
-          <button
-            onClick={onToggleTheme}
-            className="p-2 rounded-xl text-neutral-400 hover:text-white border border-neutral-800"
-            aria-label="Toggle theme"
-          >
-            {isDark ? <Sun className="w-4 h-4 text-amber-300" /> : <Moon className="w-4 h-4 text-emerald-400" />}
+            <FileText className="w-3.5 h-3.5 text-emerald-400" />
+            <span className="hidden sm:inline-block">Resume</span>
           </button>
 
+          {/* Mobile Menu Toggle Button */}
           <button
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-            id="mobile-menu-toggle"
-            className="p-2 rounded-xl text-neutral-300 hover:text-white bg-neutral-900 border border-neutral-800"
-            aria-label="Toggle menu"
+            id="nav-mobile-menu-toggle"
+            className="md:hidden p-2 rounded-xl bg-neutral-900 border border-neutral-800 text-neutral-400 hover:text-white transition-colors"
+            aria-label="Toggle navigation menu"
           >
             {mobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
           </button>
@@ -159,32 +154,33 @@ export const Navbar: React.FC<NavbarProps> = ({
       {/* Mobile Drawer Menu */}
       {mobileMenuOpen && (
         <div 
-          id="mobile-dropdown-menu"
-          className="lg:hidden px-4 pt-3 pb-6 bg-neutral-950/95 border-b border-neutral-800 backdrop-blur-xl space-y-3 animate-fade-in"
+          id="mobile-navigation-drawer"
+          className="md:hidden bg-neutral-950/95 border-b border-neutral-800/90 px-6 py-5 space-y-3 backdrop-blur-xl animate-in slide-in-from-top-4 duration-200"
         >
           <div className="flex flex-col space-y-1">
             {NAV_LINKS.map((link) => (
               <a
-                key={link.label}
+                key={link.href}
                 href={link.href}
                 onClick={(e) => {
                   e.preventDefault();
                   handleNavClick(link.href);
                 }}
-                className="px-3 py-2 text-sm font-medium text-neutral-300 hover:text-emerald-400 hover:bg-neutral-900 rounded-lg transition-colors"
+                className="px-3 py-2 text-sm font-medium text-neutral-300 hover:text-white hover:bg-neutral-900 rounded-lg transition-colors"
               >
                 {link.label}
               </a>
             ))}
           </div>
 
-          <div className="pt-3 border-t border-neutral-800 flex items-center">
+          <div className="pt-3 border-t border-neutral-800 flex items-center justify-between">
+            <span className="text-xs font-mono text-neutral-400">Rudraksh Bansal Portfolio</span>
             <button
               onClick={() => {
                 setMobileMenuOpen(false);
                 onOpenResume();
               }}
-              className="w-full inline-flex items-center justify-center gap-1.5 px-4 py-2.5 text-xs font-medium text-white bg-emerald-600 hover:bg-emerald-500 rounded-xl shadow-sm transition-all"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-500 text-xs font-semibold text-white shadow-sm"
             >
               <FileText className="w-3.5 h-3.5" />
               <span>View Resume</span>

@@ -1,13 +1,25 @@
 import React from 'react';
 import { GraduationCap, Calendar, BookOpen, Award, CheckCircle } from 'lucide-react';
 import { EDUCATION_DATA } from '../data/portfolioData';
+import { EducationMilestone } from '../types';
 
-export const Education: React.FC = () => {
+interface EducationProps {
+  education?: EducationMilestone;
+}
+
+export const Education: React.FC<EducationProps> = ({ education }) => {
+  const degree = education?.degree || EDUCATION_DATA.degree;
+  const institution = education?.institution || EDUCATION_DATA.institution;
+  const semester = education?.currentSemester || EDUCATION_DATA.currentSemester;
+  const period = education?.period || EDUCATION_DATA.period;
+  const description = education?.description || EDUCATION_DATA.description;
+  const coursework = education?.coursework && education.coursework.length > 0 ? education.coursework : EDUCATION_DATA.coursework;
+
   return (
-    <section id="education" className="py-20 sm:py-28 relative bg-neutral-950/40">
+    <section id="education" className="py-10 sm:py-14 md:py-16 relative bg-neutral-950/40">
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
         {/* Section Header */}
-        <div className="space-y-2 mb-12">
+        <div className="space-y-2 mb-6 sm:mb-8 md:mb-10">
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
             <span className="text-xs font-mono tracking-widest text-emerald-400 uppercase">
@@ -26,7 +38,7 @@ export const Education: React.FC = () => {
         <div className="max-w-4xl mx-auto">
           <div 
             id="education-timeline-card"
-            className="p-6 sm:p-8 rounded-2xl bg-neutral-900/40 border border-neutral-800/80 backdrop-blur-sm relative overflow-hidden"
+            className="p-5 sm:p-7 md:p-8 rounded-2xl bg-neutral-900/40 border border-neutral-800/80 backdrop-blur-sm relative overflow-hidden"
           >
             {/* Top Badge Strip */}
             <div className="flex flex-wrap items-center justify-between gap-3 pb-6 border-b border-neutral-800">
@@ -39,7 +51,7 @@ export const Education: React.FC = () => {
                     Undergraduate Program
                   </span>
                   <h3 className="text-lg sm:text-xl font-bold text-white">
-                    {EDUCATION_DATA.degree}
+                    {degree}
                   </h3>
                 </div>
               </div>
@@ -47,10 +59,10 @@ export const Education: React.FC = () => {
               <div className="flex items-center gap-2">
                 <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium font-mono bg-emerald-500/10 text-emerald-400 border border-emerald-500/30">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
-                  {EDUCATION_DATA.currentSemester}
+                  {semester}
                 </span>
                 <span className="text-xs text-neutral-400 font-mono hidden sm:inline-block">
-                  {EDUCATION_DATA.period}
+                  {period}
                 </span>
               </div>
             </div>
@@ -62,10 +74,10 @@ export const Education: React.FC = () => {
                   Specialization in Artificial Intelligence & Machine Learning (AI-ML)
                 </h4>
                 <p className="text-sm font-medium text-neutral-300 mt-1">
-                  {EDUCATION_DATA.institution}
+                  {institution}
                 </p>
                 <p className="text-xs text-neutral-400 mt-2 leading-relaxed">
-                  {EDUCATION_DATA.description}
+                  {description}
                 </p>
               </div>
 
@@ -76,7 +88,7 @@ export const Education: React.FC = () => {
                   Key Academic Coursework & Core Modules
                 </h5>
                 <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2.5">
-                  {EDUCATION_DATA.coursework.map((course, idx) => (
+                  {coursework.map((course, idx) => (
                     <div
                       key={idx}
                       className="p-2.5 rounded-xl bg-neutral-950/60 border border-neutral-800/80 flex items-center gap-2 text-xs text-neutral-200"

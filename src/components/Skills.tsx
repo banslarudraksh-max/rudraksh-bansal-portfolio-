@@ -1,8 +1,13 @@
 import React from 'react';
 import { Terminal, Layout, Wrench, Briefcase, Check } from 'lucide-react';
 import { SKILL_CATEGORIES } from '../data/portfolioData';
+import { SkillItemAdmin } from '../admin/types';
 
-export const Skills: React.FC = () => {
+interface SkillsProps {
+  skills?: SkillItemAdmin[];
+}
+
+export const Skills: React.FC<SkillsProps> = ({ skills }) => {
   const getCategoryIcon = (iconName: string) => {
     switch (iconName) {
       case 'Terminal':
@@ -18,11 +23,35 @@ export const Skills: React.FC = () => {
     }
   };
 
+  // If dynamic skills provided, group them
+  const categoriesToRender = React.useMemo(() => {
+    if (!skills || skills.length === 0) {
+      return SKILL_CATEGORIES;
+    }
+
+    const activeSkills = skills.filter((s) => s.isActive !== false);
+
+    return SKILL_CATEGORIES.map((cat) => {
+      const matching = activeSkills.filter((s) => s.category === cat.title);
+      if (matching.length === 0) {
+        return cat;
+      }
+      return {
+        ...cat,
+        skills: matching.map((s) => ({
+          name: s.name,
+          level: s.level,
+          note: s.description,
+        })),
+      };
+    });
+  }, [skills]);
+
   return (
-    <section id="skills" className="py-20 sm:py-28 relative bg-neutral-950/40">
+    <section id="skills" className="py-10 sm:py-14 md:py-16 relative bg-neutral-950/40">
       <div className="max-w-6xl mx-auto px-4 sm:px-6">
         {/* Header */}
-        <div className="space-y-2 mb-12">
+        <div className="space-y-2 mb-6 sm:mb-8 md:mb-10">
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-emerald-500"></span>
             <span className="text-xs font-mono tracking-widest text-emerald-400 uppercase">
@@ -38,16 +67,16 @@ export const Skills: React.FC = () => {
         </div>
 
         {/* 4 Category Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-          {SKILL_CATEGORIES.map((category, catIdx) => (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+          {categoriesToRender.map((category, catIdx) => (
             <div
               key={catIdx}
               id={`skill-category-${catIdx}`}
-              className="p-6 rounded-2xl bg-neutral-900/40 border border-neutral-800/80 hover:border-neutral-700/80 transition-all duration-300 flex flex-col justify-between"
+              className="p-5 sm:p-6 rounded-2xl bg-neutral-900/40 border border-neutral-800/80 hover:border-neutral-700/80 transition-all duration-300 flex flex-col justify-between"
             >
               <div>
                 {/* Category Header */}
-                <div className="flex items-center justify-between pb-4 border-b border-neutral-800/80 mb-5">
+                <div className="flex items-center justify-between pb-3.5 sm:pb-4 border-b border-neutral-800/80 mb-4 sm:mb-5">
                   <div className="flex items-center gap-3">
                     <div className="p-2 rounded-xl bg-neutral-800/80 border border-neutral-700/50">
                       {getCategoryIcon(category.icon)}
@@ -67,11 +96,11 @@ export const Skills: React.FC = () => {
                 </div>
 
                 {/* Skills list */}
-                <div className="space-y-3">
+                <div className="space-y-2.5 sm:space-y-3">
                   {category.skills.map((skill, sIdx) => (
                     <div
                       key={sIdx}
-                      className="p-3.5 rounded-xl bg-neutral-950/60 border border-neutral-800/60 hover:border-neutral-700 transition-colors flex items-start justify-between gap-3 group"
+                      className="p-2.5 sm:p-3.5 rounded-xl bg-neutral-950/60 border border-neutral-800/60 hover:border-neutral-700 transition-colors flex items-start justify-between gap-3 group"
                     >
                       <div className="space-y-0.5">
                         <div className="flex items-center gap-2">

@@ -8,9 +8,10 @@ interface FooterProps {
     linkedin: string;
     email: string;
   };
+  onNavigateAdmin?: () => void;
 }
 
-export const Footer: React.FC<FooterProps> = ({ links = PERSONAL_INFO.links }) => {
+export const Footer: React.FC<FooterProps> = ({ links = PERSONAL_INFO.links, onNavigateAdmin }) => {
   const scrollToTop = () => {
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
@@ -84,7 +85,22 @@ export const Footer: React.FC<FooterProps> = ({ links = PERSONAL_INFO.links }) =
 
         {/* Bottom bar */}
         <div className="pt-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-neutral-400">
-          <p>© 2026 Rudraksh Bansal. All rights reserved.</p>
+          <p className="flex items-center gap-2">
+            <span>© 2026 Rudraksh Bansal. All rights reserved.</span>
+            <span>•</span>
+            <a
+              href="/admin/login"
+              onClick={(e) => {
+                if (onNavigateAdmin) {
+                  e.preventDefault();
+                  onNavigateAdmin();
+                }
+              }}
+              className="hover:text-emerald-400 transition-colors cursor-pointer"
+            >
+              Admin Portal
+            </a>
+          </p>
           <p className="flex items-center gap-1 font-mono text-[11px]">
             <span>Crafted for AI Web Development Internship Task</span>
           </p>
