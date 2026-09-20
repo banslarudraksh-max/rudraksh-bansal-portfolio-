@@ -29,7 +29,7 @@ export const Hero: React.FC<HeroProps> = ({ onOpenResume, profile, heroProfile, 
   // Read dynamically from public.hero_profile, falling back gracefully to profile / constants
   const name = heroProfile?.name || profile?.name || PERSONAL_INFO.name;
   const badge = heroProfile?.badge || profile?.availabilityStatus || 'Available for Internships';
-  const headline = heroProfile?.headline || profile?.headline || 'B.Tech CSE Student(AI-ML) & Aspiring Software Developer';
+  const headline = heroProfile?.headline || profile?.headline || 'B.Tech CSE Student(AI-ML)';
   const description =
     heroProfile?.description ||
     profile?.introduction ||
@@ -47,7 +47,7 @@ class DeveloperProfile:
         self.name = "${name}"
         self.role = "B.Tech ${specialization}"
         self.status = "${badge}"
-        self.focus_areas = ["Python", "Full Stack", "Emerging AI"]
+        self.focus_areas = ["Python", "Full Stack", "Emerging AI", "AI-ML"]
 
     def mission(self) -> str:
         return "${description}"
