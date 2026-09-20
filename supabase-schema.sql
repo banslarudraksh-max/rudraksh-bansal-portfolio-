@@ -399,7 +399,8 @@ WITH CHECK (bucket_id = 'portfolio-assets');
 
 CREATE POLICY "Admins can update portfolio assets"
 ON storage.objects FOR UPDATE TO authenticated
-USING (bucket_id = 'portfolio-assets');
+USING (bucket_id = 'portfolio-assets')
+WITH CHECK (bucket_id = 'portfolio-assets');
 
 CREATE POLICY "Admins can delete portfolio assets"
 ON storage.objects FOR DELETE TO authenticated

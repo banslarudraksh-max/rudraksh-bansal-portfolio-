@@ -6,16 +6,30 @@ import {
   PROJECTS,
 } from '../data/portfolioData';
 
-interface ContactLinks {
-  github: string;
-  linkedin: string;
-  email: string;
+export interface ContactLinks {
+  github?: string;
+  linkedin?: string;
+  email?: string;
+}
+
+export interface GenerateResumeOptions {
+  profile?: {
+    name?: string;
+    role?: string;
+    location?: string;
+    degree?: string;
+    university?: string;
+    currentSemester?: string;
+    bio?: string;
+  };
+  links?: ContactLinks;
+  filename?: string;
 }
 
 /**
- * Generates and downloads a clean, professional A4 PDF of Rudraksh Bansal's resume.
+ * Generates and downloads a clean, professional A4 PDF of the resume.
  */
-export function generateResumePDF(links: ContactLinks = PERSONAL_INFO.links): void {
+export function generateResumePDF(options?: GenerateResumeOptions | ContactLinks): void {
   const doc = new jsPDF({
     format: 'a4',
     unit: 'mm',
@@ -27,6 +41,46 @@ export function generateResumePDF(links: ContactLinks = PERSONAL_INFO.links): vo
   const marginX = 16;
   const contentWidth = pageWidth - marginX * 2;
   let currentY = 16;
+
+  // Resolve options or legacy direct ContactLinks object
+  let profileData: GenerateResumeOptions['profile'] | undefined;
+  let links: ContactLinks = PERSONAL_INFO.links;
+  let outputFilename = 'Rudraksh_Bansal_Resume.pdf';
+
+  if (options) {
+    if ('profile' in options || 'filename' in options || ('links' in options && typeof options.links === 'object')) {
+      const opts = options as GenerateResumeOptions;
+      profileData = opts.profile;
+      if (opts.links) {
+        links = {
+          email: opts.links.email || PERSONAL_INFO.links.email,
+          github: opts.links.github || PERSONAL_INFO.links.github,
+          linkedin: opts.links.linkedin || PERSONAL_INFO.links.linkedin,
+        };
+      }
+      if (opts.filename) {
+        outputFilename = opts.filename;
+      }
+    } else {
+      const legacyLinks = options as ContactLinks;
+      links = {
+        email: legacyLinks.email || PERSONAL_INFO.links.email,
+        github: legacyLinks.github || PERSONAL_INFO.links.github,
+        linkedin: legacyLinks.linkedin || PERSONAL_INFO.links.linkedin,
+      };
+    }
+  }
+
+  const name = profileData?.name || PERSONAL_INFO.name;
+  const role = profileData?.role || PERSONAL_INFO.role;
+  const location = profileData?.location || PERSONAL_INFO.location;
+  const institution = profileData?.university || EDUCATION_DATA.institution;
+  const degree = profileData?.degree || EDUCATION_DATA.degree;
+  const currentSemester = profileData?.currentSemester || EDUCATION_DATA.currentSemester;
+  const bio = profileData?.bio || PERSONAL_INFO.bio;
+  const email = links.email || PERSONAL_INFO.links.email;
+  const github = links.github || PERSONAL_INFO.links.github;
+  const linkedin = links.linkedin || PERSONAL_INFO.links.linkedin;
 
   // Helper to check page break threshold
   const checkPageBreak = (neededSpace: number): boolean => {
@@ -56,19 +110,19 @@ export function generateResumePDF(links: ContactLinks = PERSONAL_INFO.links): vo
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(20);
   doc.setTextColor(15, 23, 42); // slate-900
-  doc.text(PERSONAL_INFO.name, marginX, currentY);
+  doc.text(name, marginX, currentY);
   currentY += 6.5;
 
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(10.5);
   doc.setTextColor(5, 150, 105); // emerald-600
-  doc.text(PERSONAL_INFO.role, marginX, currentY);
+  doc.text(role, marginX, currentY);
   currentY += 5;
 
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(9);
   doc.setTextColor(71, 85, 105); // slate-600
-  doc.text(`${PERSONAL_INFO.location}  •  ${EDUCATION_DATA.institution}`, marginX, currentY);
+  doc.text(`${location}  •  ${institution}`, marginX, currentY);
   currentY += 4.5;
 
   // Contact Links Row with clickable hyperlinks
@@ -77,20 +131,20 @@ export function generateResumePDF(links: ContactLinks = PERSONAL_INFO.links): vo
   doc.setTextColor(5, 150, 105);
 
   // Email
-  const emailText = `Email: ${links.email}`;
-  doc.textWithLink(emailText, marginX, linkY, { url: `mailto:${links.email}` });
+  const emailText = `Email: ${email}`;
+  doc.textWithLink(emailText, marginX, linkY, { url: `mailto:${email}` });
   const emailWidth = doc.getTextWidth(emailText);
 
   // GitHub
   const ghX = marginX + emailWidth + 6;
   const ghText = 'GitHub Profile';
-  doc.textWithLink(ghText, ghX, linkY, { url: links.github });
+  doc.textWithLink(ghText, ghX, linkY, { url: github });
   const ghWidth = doc.getTextWidth(ghText);
 
   // LinkedIn
   const inX = ghX + ghWidth + 6;
   const inText = 'LinkedIn Profile';
-  doc.textWithLink(inText, inX, linkY, { url: links.linkedin });
+  doc.textWithLink(inText, inX, linkY, { url: linkedin });
 
   currentY += 4;
 
@@ -105,7 +159,7 @@ export function generateResumePDF(links: ContactLinks = PERSONAL_INFO.links): vo
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(9);
   doc.setTextColor(51, 65, 85); // slate-700
-  const bioLines = doc.splitTextToSize(PERSONAL_INFO.bio, contentWidth);
+  const bioLines = doc.splitTextToSize(bio, contentWidth);
   doc.text(bioLines, marginX, currentY);
   currentY += bioLines.length * 4.2 + 2.5;
 
@@ -114,18 +168,18 @@ export function generateResumePDF(links: ContactLinks = PERSONAL_INFO.links): vo
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(9.5);
   doc.setTextColor(15, 23, 42);
-  doc.text(`${EDUCATION_DATA.degree} – ${EDUCATION_DATA.specialization}`, marginX, currentY);
+  doc.text(`${degree} – ${EDUCATION_DATA.specialization}`, marginX, currentY);
 
   doc.setFont('helvetica', 'bold');
   doc.setFontSize(8.5);
   doc.setTextColor(5, 150, 105);
-  doc.text(EDUCATION_DATA.currentSemester, marginX + contentWidth, currentY, { align: 'right' });
+  doc.text(currentSemester, marginX + contentWidth, currentY, { align: 'right' });
   currentY += 4.5;
 
   doc.setFont('helvetica', 'normal');
   doc.setFontSize(8.5);
   doc.setTextColor(71, 85, 105);
-  doc.text(`${EDUCATION_DATA.institution}  •  ${EDUCATION_DATA.period}`, marginX, currentY);
+  doc.text(`${institution}  •  ${EDUCATION_DATA.period}`, marginX, currentY);
   currentY += 4.5;
 
   doc.setFont('helvetica', 'bold');
@@ -229,12 +283,12 @@ export function generateResumePDF(links: ContactLinks = PERSONAL_INFO.links): vo
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(8);
     doc.setTextColor(148, 163, 184);
-    doc.text('Rudraksh Bansal — Professional Portfolio Resume', marginX, pageHeight - 8);
+    doc.text(`${name} — Professional Portfolio Resume`, marginX, pageHeight - 8);
     doc.text(`Page ${p} of ${totalPages}`, marginX + contentWidth, pageHeight - 8, {
       align: 'right',
     });
   }
 
-  // Trigger browser download with exact requested filename
-  doc.save('Rudraksh_Bansal_Resume.pdf');
+  // Trigger browser download with requested filename
+  doc.save(outputFilename);
 }

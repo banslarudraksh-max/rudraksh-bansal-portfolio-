@@ -8,10 +8,12 @@ import {
 } from '../data/portfolioData';
 import {
   ProjectItem,
+  ProjectImageRecord,
   HighlightCard,
   EducationMilestone,
   ResumeRecord,
   SocialLinkRecord,
+  HeroProfileRecord,
 } from '../types';
 import {
   ProfileDataAdmin,
@@ -23,6 +25,8 @@ import {
   ContactInfoAdmin,
   SiteSettingsData,
 } from '../admin/types';
+
+export const ADMIN_USER_ID = '780ea72d-e169-41fa-b627-9665a5be2d26';
 
 // ==============================================================================
 // 1. DEFAULT FALLBACK DATA (Matches Rudraksh Bansal's Portfolio)
@@ -41,6 +45,19 @@ export const DEFAULT_PROFILE: ProfileDataAdmin = {
   careerDirection: 'Software Engineering & AI/ML Applications',
   availabilityStatus: 'Open to Software Development & Web Engineering Internships',
   resumeUrl: '#',
+};
+
+export const EXISTING_HERO_PROFILE_ID = '7a6ee60a-1659-4633-996e-99b50dd561f0';
+
+export const DEFAULT_HERO_PROFILE: HeroProfileRecord = {
+  id: EXISTING_HERO_PROFILE_ID,
+  name: PERSONAL_INFO.name,
+  badge: 'Available for Internships',
+  headline: 'B.Tech CSE Student & Aspiring Software Developer',
+  description: 'Building practical solutions with code, creativity and emerging AI technologies.',
+  image_url: null,
+  image_alt: 'Rudraksh Bansal - Professional Developer Profile',
+  is_active: true,
 };
 
 export const DEFAULT_ABOUT: AboutDataAdmin = {
@@ -376,6 +393,49 @@ export const portfolioService = {
     }
   },
 
+  async addHighlight(card: Omit<HighlightCard, 'id'>): Promise<{ success: boolean; id?: string; error?: string }> {
+    if (!isSupabaseConfigured) return { success: false, error: 'Supabase credentials not configured' };
+    try {
+      let { data: aboutRow } = await supabase.from('about').select('id').limit(1).maybeSingle();
+      if (!aboutRow) {
+        const { data: newAbout } = await supabase.from('about').insert({
+          heading: 'About Me',
+          description: DEFAULT_ABOUT.description,
+          career_objective: DEFAULT_ABOUT.careerObjective,
+        }).select('id').single();
+        aboutRow = newAbout;
+      }
+
+      const { data, error } = await supabase
+        .from('about_highlights')
+        .insert({
+          about_id: aboutRow?.id,
+          title: card.title,
+          subtitle: card.subtitle,
+          description: card.description,
+          icon: card.iconName || 'GraduationCap',
+          display_order: card.displayOrder || 1,
+        })
+        .select('id')
+        .single();
+      if (error) return { success: false, error: error.message };
+      return { success: true, id: data.id };
+    } catch (e: unknown) {
+      return { success: false, error: e instanceof Error ? e.message : 'Failed to add highlight' };
+    }
+  },
+
+  async deleteHighlight(id: string): Promise<{ success: boolean; error?: string }> {
+    if (!isSupabaseConfigured) return { success: false, error: 'Supabase credentials not configured' };
+    try {
+      const { error } = await supabase.from('about_highlights').delete().eq('id', id);
+      if (error) return { success: false, error: error.message };
+      return { success: true };
+    } catch (e: unknown) {
+      return { success: false, error: e instanceof Error ? e.message : 'Failed to delete highlight' };
+    }
+  },
+
   // ----------------------------------------------------------------------------
   // EDUCATION
   // ----------------------------------------------------------------------------
@@ -568,26 +628,48 @@ export const portfolioService = {
       const { data, error } = await query;
       if (error || !data || data.length === 0) return PROJECTS;
 
-      return data.map((d) => ({
-        id: d.id,
-        title: d.title,
-        category: d.category || 'Python / Systems',
-        description: d.short_description,
-        fullDescription: d.full_description || d.short_description,
-        technologies: Array.isArray(d.technologies) ? d.technologies : [],
-        githubPlaceholder: d.github_url || 'https://github.com/RudrakshBansal7',
-        demoPlaceholder: d.live_demo_url || '',
-        mainImageUrl: d.main_image_url || '',
-        status: d.status || 'Completed',
-        isFeatured: d.is_featured ?? false,
-        isVisible: d.is_visible ?? true,
-        displayOrder: d.display_order ?? 0,
-        keyFeatures: [
-          'Modular architecture with clean separation of concerns',
-          'Optimized event loop and user interaction feedback',
-          'Production-tested error boundaries and responsive styling',
-        ],
-      }));
+      // Query screenshots from project_images
+      const { data: imagesData } = await supabase
+        .from('project_images')
+        .select('*')
+        .order('display_order', { ascending: true });
+
+      const imagesByProject: Record<string, string[]> = {};
+      if (imagesData) {
+        imagesData.forEach((img) => {
+          if (!imagesByProject[img.project_id]) imagesByProject[img.project_id] = [];
+          imagesByProject[img.project_id].push(img.image_url);
+        });
+      }
+
+      return data.map((d) => {
+        const itemScreenshots = imagesByProject[d.id] && imagesByProject[d.id].length > 0
+          ? imagesByProject[d.id]
+          : (d.main_image_url ? [d.main_image_url] : []);
+
+        return {
+          id: d.id,
+          title: d.title,
+          category: d.category || 'Python / Systems',
+          description: d.short_description,
+          fullDescription: d.full_description || d.short_description,
+          technologies: Array.isArray(d.technologies) ? d.technologies : [],
+          githubPlaceholder: d.github_url || 'https://github.com/banslarudraksh-max',
+          demoPlaceholder: d.live_demo_url || '',
+          mainImageUrl: d.main_image_url || '',
+          imageUrl: d.main_image_url || '',
+          screenshots: itemScreenshots,
+          status: d.status || 'Completed',
+          isFeatured: d.is_featured ?? false,
+          isVisible: d.is_visible ?? true,
+          displayOrder: d.display_order ?? 0,
+          keyFeatures: [
+            'Modular architecture with clean separation of concerns',
+            'Optimized event loop and user interaction feedback',
+            'Production-tested error boundaries and responsive styling',
+          ],
+        };
+      });
     } catch {
       return PROJECTS;
     }
@@ -596,15 +678,16 @@ export const portfolioService = {
   async addProject(project: Omit<ProjectItem, 'id'>): Promise<{ success: boolean; id?: string; error?: string }> {
     if (!isSupabaseConfigured) return { success: false, error: 'Supabase not configured' };
     try {
+      const mainImg = project.mainImageUrl || project.imageUrl || '';
       const { data, error } = await supabase
         .from('projects')
         .insert({
           title: project.title,
           short_description: project.description,
           full_description: project.fullDescription || project.description,
-          main_image_url: project.mainImageUrl || '',
+          main_image_url: mainImg,
           technologies: project.technologies || [],
-          github_url: project.githubPlaceholder || 'https://github.com/RudrakshBansal7',
+          github_url: project.githubPlaceholder || 'https://github.com/banslarudraksh-max',
           live_demo_url: project.demoPlaceholder || '',
           category: project.category || 'Python / Systems',
           status: project.status || 'Completed',
@@ -615,6 +698,18 @@ export const portfolioService = {
         .select('id')
         .single();
       if (error) return { success: false, error: error.message };
+
+      // If additional screenshots provided, also insert into project_images
+      if (project.screenshots && project.screenshots.length > 0) {
+        const imageRows = project.screenshots.map((url, idx) => ({
+          project_id: data.id,
+          image_url: url,
+          caption: `${project.title} screenshot ${idx + 1}`,
+          display_order: idx + 1,
+        }));
+        await supabase.from('project_images').insert(imageRows);
+      }
+
       return { success: true, id: data.id };
     } catch (e: unknown) {
       return { success: false, error: e instanceof Error ? e.message : 'Error adding project' };
@@ -629,6 +724,7 @@ export const portfolioService = {
       if (project.description !== undefined) payload.short_description = project.description;
       if (project.fullDescription !== undefined) payload.full_description = project.fullDescription;
       if (project.mainImageUrl !== undefined) payload.main_image_url = project.mainImageUrl;
+      if (project.imageUrl !== undefined && project.mainImageUrl === undefined) payload.main_image_url = project.imageUrl;
       if (project.technologies !== undefined) payload.technologies = project.technologies;
       if (project.githubPlaceholder !== undefined) payload.github_url = project.githubPlaceholder;
       if (project.demoPlaceholder !== undefined) payload.live_demo_url = project.demoPlaceholder;
@@ -685,6 +781,78 @@ export const portfolioService = {
       return { success: true, id: data.id };
     } catch (e: unknown) {
       return { success: false, error: e instanceof Error ? e.message : 'Error duplicating project' };
+    }
+  },
+
+  // ----------------------------------------------------------------------------
+  // PROJECT IMAGES (public.project_images)
+  // ----------------------------------------------------------------------------
+  async getProjectImages(projectId?: string): Promise<ProjectImageRecord[]> {
+    if (!isSupabaseConfigured) return [];
+    try {
+      let query = supabase.from('project_images').select('*').order('display_order', { ascending: true });
+      if (projectId) {
+        query = query.eq('project_id', projectId);
+      }
+      const { data, error } = await query;
+      if (error || !data) return [];
+      return data.map((d) => ({
+        id: d.id,
+        projectId: d.project_id,
+        imageUrl: d.image_url,
+        caption: d.caption || '',
+        displayOrder: d.display_order || 0,
+        createdAt: d.created_at,
+      }));
+    } catch {
+      return [];
+    }
+  },
+
+  async addProjectImage(img: Omit<ProjectImageRecord, 'id' | 'createdAt'>): Promise<{ success: boolean; id?: string; error?: string }> {
+    if (!isSupabaseConfigured) return { success: false, error: 'Supabase not configured' };
+    try {
+      const { data, error } = await supabase
+        .from('project_images')
+        .insert({
+          project_id: img.projectId,
+          image_url: img.imageUrl,
+          caption: img.caption || '',
+          display_order: img.displayOrder || 0,
+        })
+        .select('id')
+        .single();
+      if (error) return { success: false, error: error.message };
+      return { success: true, id: data.id };
+    } catch (e: unknown) {
+      return { success: false, error: e instanceof Error ? e.message : 'Error adding project image' };
+    }
+  },
+
+  async updateProjectImage(id: string, img: Partial<ProjectImageRecord>): Promise<{ success: boolean; error?: string }> {
+    if (!isSupabaseConfigured) return { success: false, error: 'Supabase not configured' };
+    try {
+      const payload: Record<string, unknown> = {};
+      if (img.imageUrl !== undefined) payload.image_url = img.imageUrl;
+      if (img.caption !== undefined) payload.caption = img.caption;
+      if (img.displayOrder !== undefined) payload.display_order = img.displayOrder;
+
+      const { error } = await supabase.from('project_images').update(payload).eq('id', id);
+      if (error) return { success: false, error: error.message };
+      return { success: true };
+    } catch (e: unknown) {
+      return { success: false, error: e instanceof Error ? e.message : 'Error updating project image' };
+    }
+  },
+
+  async deleteProjectImage(id: string): Promise<{ success: boolean; error?: string }> {
+    if (!isSupabaseConfigured) return { success: false, error: 'Supabase not configured' };
+    try {
+      const { error } = await supabase.from('project_images').delete().eq('id', id);
+      if (error) return { success: false, error: error.message };
+      return { success: true };
+    } catch (e: unknown) {
+      return { success: false, error: e instanceof Error ? e.message : 'Error deleting project image' };
     }
   },
 
@@ -1213,29 +1381,497 @@ export const portfolioService = {
       return { success: false, error: 'Supabase credentials not configured' };
     }
     try {
-      const fileExt = file.name.split('.').pop() || 'bin';
       const cleanFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
-      const filePath = `${folder}/${Date.now()}_${cleanFileName}`;
+      const timestamp = Date.now();
 
-      const { data, error } = await supabase.storage
-        .from('portfolio-assets')
-        .upload(filePath, file, {
-          cacheControl: '3600',
-          upsert: true,
-        });
+      // Retrieve current authenticated session to verify user token and admin user ID
+      const { data: sessionData } = await supabase.auth.getSession();
+      const currentUserId = sessionData?.session?.user?.id || ADMIN_USER_ID;
 
-      if (error) {
-        return { success: false, error: error.message };
+      // Candidate paths in case storage RLS policy requires specific folder structure
+      const candidatePaths = [
+        `${folder}/${timestamp}_${cleanFileName}`,
+        `${currentUserId}/${timestamp}_${cleanFileName}`,
+        `public/${timestamp}_${cleanFileName}`,
+        `${timestamp}_${cleanFileName}`,
+      ];
+
+      let lastError: string | null = null;
+      let uploadedPath: string | null = null;
+
+      for (const targetPath of candidatePaths) {
+        // IMPORTANT: Do NOT use upsert: true. 
+        // With upsert: true, PostgreSQL executes ON CONFLICT DO UPDATE, which evaluates UPDATE RLS policies.
+        // If an UPDATE policy is not defined or fails, it throws "new row violates row-level security policy".
+        const { data, error } = await supabase.storage
+          .from('portfolio-assets')
+          .upload(targetPath, file, {
+            cacheControl: '3600',
+            upsert: false,
+            contentType: file.type || 'application/octet-stream',
+          });
+
+        if (!error && data?.path) {
+          uploadedPath = data.path;
+          break;
+        }
+
+        if (error) {
+          lastError = error.message;
+          // If error is not related to RLS policy, stop trying other paths
+          if (
+            !error.message.toLowerCase().includes('row-level security') &&
+            !error.message.toLowerCase().includes('policy') &&
+            !error.message.toLowerCase().includes('unauthorized') &&
+            !error.message.toLowerCase().includes('permission')
+          ) {
+            break;
+          }
+        }
+      }
+
+      if (!uploadedPath) {
+        return { success: false, error: lastError || 'Upload failed' };
       }
 
       // Retrieve public URL
       const { data: urlData } = supabase.storage
         .from('portfolio-assets')
-        .getPublicUrl(data.path);
+        .getPublicUrl(uploadedPath);
 
       return { success: true, url: urlData.publicUrl };
     } catch (e: unknown) {
       return { success: false, error: e instanceof Error ? e.message : 'Upload failed' };
+    }
+  },
+
+  // ----------------------------------------------------------------------------
+  // HERO PROFILE (public.hero_profile)
+  // ----------------------------------------------------------------------------
+  async getHeroProfile(activeOnly = true): Promise<HeroProfileRecord | null> {
+    if (!isSupabaseConfigured) {
+      return DEFAULT_HERO_PROFILE;
+    }
+    try {
+      // 2. Load the existing hero_profile row first:
+      //    SELECT * FROM public.hero_profile WHERE is_active = true LIMIT 1
+      let query = supabase.from('hero_profile').select('*');
+      if (activeOnly) {
+        query = query.eq('is_active', true);
+      }
+      const { data, error } = await query
+        .order('updated_at', { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (error) {
+        console.warn('Error querying hero_profile table:', error.message);
+        // Fallback: try loading by the known existing row id
+        const { data: byId } = await supabase
+          .from('hero_profile')
+          .select('*')
+          .eq('id', EXISTING_HERO_PROFILE_ID)
+          .maybeSingle();
+
+        if (byId) {
+          return {
+            id: byId.id,
+            name: byId.name ?? DEFAULT_HERO_PROFILE.name,
+            badge: byId.badge ?? DEFAULT_HERO_PROFILE.badge,
+            headline: byId.headline ?? DEFAULT_HERO_PROFILE.headline,
+            description: byId.description ?? DEFAULT_HERO_PROFILE.description,
+            image_url: byId.image_url ?? null,
+            image_alt: byId.image_alt ?? DEFAULT_HERO_PROFILE.image_alt,
+            is_active: byId.is_active ?? true,
+            updated_at: byId.updated_at,
+            created_at: byId.created_at,
+          };
+        }
+
+        return DEFAULT_HERO_PROFILE;
+      }
+
+      if (!data) {
+        // Check by the known existing id: 7a6ee60a-1659-4633-996e-99b50dd561f0
+        const { data: byId } = await supabase
+          .from('hero_profile')
+          .select('*')
+          .eq('id', EXISTING_HERO_PROFILE_ID)
+          .maybeSingle();
+
+        if (byId) {
+          return {
+            id: byId.id,
+            name: byId.name ?? DEFAULT_HERO_PROFILE.name,
+            badge: byId.badge ?? DEFAULT_HERO_PROFILE.badge,
+            headline: byId.headline ?? DEFAULT_HERO_PROFILE.headline,
+            description: byId.description ?? DEFAULT_HERO_PROFILE.description,
+            image_url: byId.image_url ?? null,
+            image_alt: byId.image_alt ?? DEFAULT_HERO_PROFILE.image_alt,
+            is_active: byId.is_active ?? true,
+            updated_at: byId.updated_at,
+            created_at: byId.created_at,
+          };
+        }
+
+        return activeOnly ? null : DEFAULT_HERO_PROFILE;
+      }
+
+      return {
+        id: data.id,
+        name: data.name ?? DEFAULT_HERO_PROFILE.name,
+        badge: data.badge ?? DEFAULT_HERO_PROFILE.badge,
+        headline: data.headline ?? DEFAULT_HERO_PROFILE.headline,
+        description: data.description ?? DEFAULT_HERO_PROFILE.description,
+        image_url: data.image_url ?? null,
+        image_alt: data.image_alt ?? DEFAULT_HERO_PROFILE.image_alt,
+        is_active: data.is_active ?? true,
+        updated_at: data.updated_at,
+        created_at: data.created_at,
+      };
+    } catch (e) {
+      console.warn('hero_profile get error:', e);
+      return DEFAULT_HERO_PROFILE;
+    }
+  },
+
+  // ----------------------------------------------------------------------------
+  // ADMIN AUTH & HERO PROFILE (public.hero_profile)
+  // ----------------------------------------------------------------------------
+  async verifyAdminSession(): Promise<{ valid: boolean; userId?: string; error?: string }> {
+    if (!isSupabaseConfigured) {
+      return { valid: false, error: 'Supabase credentials not configured' };
+    }
+    try {
+      // 1. Get current authenticated session using the EXISTING Supabase client
+      const { data, error } = await supabase.auth.getSession();
+      let session = data?.session;
+
+      // Check if session token is close to expiry (< 60 seconds)
+      const nowSeconds = Math.floor(Date.now() / 1000);
+      const isExpiringSoon = Boolean(session?.expires_at && session.expires_at <= nowSeconds + 60);
+
+      // 2. If the session is missing, errored, or expiring soon, call: supabase.auth.refreshSession()
+      if (!session || error || isExpiringSoon) {
+        try {
+          const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+          if (!refreshError && refreshData?.session) {
+            session = refreshData.session;
+          }
+        } catch (refEx) {
+          console.warn('verifyAdminSession refreshSession exception:', refEx);
+        }
+      }
+
+      // If still no session after refresh
+      if (!session || !session.user) {
+        console.warn('No active admin session detected after refreshSession()');
+        return { valid: false, error: 'Please login again' };
+      }
+
+      return { valid: true, userId: session.user.id };
+    } catch (err) {
+      console.error('Session verification exception:', err);
+      return { valid: false, error: 'Please login again' };
+    }
+  },
+
+  async updateHeroProfile(
+    profileData: Partial<HeroProfileRecord>
+  ): Promise<{ success: boolean; data?: HeroProfileRecord; error?: string }> {
+    if (!isSupabaseConfigured) {
+      return { success: false, error: 'Supabase credentials not configured' };
+    }
+
+    // 8. Use the currently authenticated Supabase session
+    // 9. Before saving, verify: const { data: { session } } = await supabase.auth.getSession();
+    const { data: { session } } = await supabase.auth.getSession();
+    let currentSession = session;
+
+    if (!currentSession) {
+      try {
+        const { data: refreshData, error: refreshErr } = await supabase.auth.refreshSession();
+        if (!refreshErr && refreshData?.session) {
+          currentSession = refreshData.session;
+        }
+      } catch (err) {
+        console.warn('refreshSession attempt failed:', err);
+      }
+    }
+
+    // 10. If there is no session, show "Please login again".
+    if (!currentSession) {
+      return { success: false, error: 'Please login again' };
+    }
+
+    try {
+      // 2. Load the existing hero_profile row first:
+      //    SELECT * FROM public.hero_profile
+      //    WHERE is_active = true
+      //    LIMIT 1
+      // 3. Store its id: 7a6ee60a-1659-4633-996e-99b50dd561f0
+      let existingHeroId: string = EXISTING_HERO_PROFILE_ID;
+
+      const { data: activeRows, error: activeErr } = await supabase
+        .from('hero_profile')
+        .select('id')
+        .eq('is_active', true)
+        .limit(1);
+
+      if (activeErr) {
+        console.error('Supabase error querying active hero_profile row:', activeErr);
+      }
+
+      if (activeRows && activeRows.length > 0 && activeRows[0].id) {
+        existingHeroId = activeRows[0].id;
+      } else {
+        // Fallback: check if ANY row exists in public.hero_profile
+        const { data: anyRows } = await supabase
+          .from('hero_profile')
+          .select('id')
+          .limit(1);
+
+        if (anyRows && anyRows.length > 0 && anyRows[0].id) {
+          existingHeroId = anyRows[0].id;
+        }
+      }
+
+      // If profileData explicitly passed a valid uuid (e.g. from existing row)
+      if (profileData.id && profileData.id.includes('-') && profileData.id !== 'hero-profile-1') {
+        existingHeroId = profileData.id;
+      }
+
+      // 4. When saving text/content, use:
+      //    supabase
+      //      .from('hero_profile')
+      //      .update({
+      //        name,
+      //        badge,
+      //        headline,
+      //        description,
+      //        image_url,
+      //        image_alt,
+      //        is_active,
+      //        updated_at: new Date().toISOString()
+      //      })
+      //      .eq('id', existingHeroId)
+      // 5. NEVER use: .insert(...) for Hero Profile saving.
+      // 6. NEVER use: .upsert(...) for Hero Profile saving.
+      const { data: updatedRecord, error: updateError } = await supabase
+        .from('hero_profile')
+        .update({
+          name: profileData.name !== undefined ? profileData.name.trim() : DEFAULT_HERO_PROFILE.name,
+          badge: profileData.badge !== undefined ? profileData.badge.trim() : DEFAULT_HERO_PROFILE.badge,
+          headline: profileData.headline !== undefined ? profileData.headline.trim() : DEFAULT_HERO_PROFILE.headline,
+          description: profileData.description !== undefined ? profileData.description.trim() : DEFAULT_HERO_PROFILE.description,
+          image_url: profileData.image_url !== undefined ? profileData.image_url : null,
+          image_alt: profileData.image_alt !== undefined ? profileData.image_alt : DEFAULT_HERO_PROFILE.image_alt,
+          is_active: profileData.is_active !== undefined ? profileData.is_active : true,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', existingHeroId)
+        .select('*')
+        .single();
+
+      if (updateError) {
+        console.error('Supabase error updating hero_profile row:', updateError);
+        const formattedErr = [
+          updateError.message,
+          updateError.code ? `Code: ${updateError.code}` : null,
+          updateError.details ? `Details: ${updateError.details}` : null,
+          updateError.hint ? `Hint: ${updateError.hint}` : null,
+        ].filter(Boolean).join(' | ');
+        return { success: false, error: formattedErr || updateError.message };
+      }
+
+      return {
+        success: true,
+        data: {
+          id: updatedRecord.id,
+          name: updatedRecord.name ?? DEFAULT_HERO_PROFILE.name,
+          badge: updatedRecord.badge ?? DEFAULT_HERO_PROFILE.badge,
+          headline: updatedRecord.headline ?? DEFAULT_HERO_PROFILE.headline,
+          description: updatedRecord.description ?? DEFAULT_HERO_PROFILE.description,
+          image_url: updatedRecord.image_url ?? null,
+          image_alt: updatedRecord.image_alt ?? DEFAULT_HERO_PROFILE.image_alt,
+          is_active: updatedRecord.is_active ?? true,
+          updated_at: updatedRecord.updated_at,
+          created_at: updatedRecord.created_at,
+        },
+      };
+    } catch (e: unknown) {
+      console.error('Exception in updateHeroProfile:', e);
+      const errObj = e as any;
+      const formattedErr = [
+        errObj?.message || 'Error updating hero profile',
+        errObj?.code ? `Code: ${errObj.code}` : null,
+        errObj?.details ? `Details: ${errObj.details}` : null,
+        errObj?.hint ? `Hint: ${errObj.hint}` : null,
+      ].filter(Boolean).join(' | ');
+      return {
+        success: false,
+        error: formattedErr,
+      };
+    }
+  },
+
+  async uploadHeroImage(file: File): Promise<{
+    success: boolean;
+    url?: string;
+    stage?: 'storage_upload' | 'hero_profile_update' | 'auth';
+    error?: string;
+  }> {
+    if (!isSupabaseConfigured) {
+      return { success: false, stage: 'auth', error: 'Supabase credentials not configured' };
+    }
+
+    // AUTH:
+    // Before upload:
+    // const { data: { session }, error } = await supabase.auth.getSession();
+    const { data: { session }, error: sessionError } = await supabase.auth.getSession();
+    let currentSession = session;
+
+    if (!currentSession || sessionError) {
+      try {
+        const { data: refreshData, error: refreshErr } = await supabase.auth.refreshSession();
+        if (!refreshErr && refreshData?.session) {
+          currentSession = refreshData.session;
+        }
+      } catch (err) {
+        console.warn('refreshSession attempt failed:', err);
+      }
+    }
+
+    // If session is missing, stop and show:
+    // "Admin session expired. Please login again."
+    if (!currentSession) {
+      console.warn('HERO UPLOAD: Admin session expired. Please login again.');
+      return {
+        success: false,
+        stage: 'auth',
+        error: 'Admin session expired. Please login again.',
+      };
+    }
+
+    try {
+      // STORAGE UPLOAD:
+      // Use the existing bucket: portfolio-assets
+      // Use a UNIQUE file path for every new upload, for example:
+      // hero/<timestamp>-<sanitized-filename>
+      // Do NOT use a path that already exists.
+      // Do NOT use upsert unless absolutely necessary.
+      const sanitizedFileName = file.name.replace(/[^a-zA-Z0-9.-]/g, '_');
+      const filePath = `hero/${Date.now()}-${sanitizedFileName}`;
+
+      console.log("HERO UPLOAD: starting storage upload");
+      console.log("HERO UPLOAD: session", currentSession?.user?.id);
+      console.log("HERO UPLOAD: bucket", "portfolio-assets");
+      console.log("HERO UPLOAD: file path", filePath);
+
+      const { data: { session: debugSession }, error: sessionErrorDiag } =
+        await supabase.auth.getSession();
+
+      console.log("=== HERO AUTH DEBUG ===");
+      console.log("Session exists:", !!debugSession);
+      console.log("User ID:", debugSession?.user?.id);
+      console.log("Email:", debugSession?.user?.email);
+      console.log("Access token exists:", !!debugSession?.access_token);
+      console.log("Session error:", sessionErrorDiag);
+
+      const { data: userData, error: userError } =
+        await supabase.auth.getUser();
+
+      console.log("getUser ID:", userData?.user?.id);
+      console.log("getUser error:", userError);
+
+      console.log("=== END HERO AUTH DEBUG ===");
+
+      const { data: uploadData, error: storageError } = await supabase.storage
+        .from('portfolio-assets')
+        .upload(filePath, file, {
+          cacheControl: '3600',
+          upsert: false,
+          contentType: file.type || 'image/jpeg',
+        });
+
+      if (storageError) {
+        console.error("HERO UPLOAD: storage upload failed", storageError);
+        const errObj = storageError as any;
+        const formattedErr = [
+          errObj.message,
+          errObj.code ? `Code: ${errObj.code}` : null,
+          errObj.details ? `Details: ${errObj.details}` : null,
+          errObj.hint ? `Hint: ${errObj.hint}` : null,
+        ].filter(Boolean).join(' | ');
+
+        return {
+          success: false,
+          stage: 'storage_upload',
+          error: formattedErr || storageError.message,
+        };
+      }
+
+      // If Storage upload succeeds, log:
+      console.log("HERO UPLOAD: storage upload successful");
+
+      // 1. Get the public URL.
+      const { data: urlData } = supabase.storage
+        .from('portfolio-assets')
+        .getPublicUrl(filePath);
+
+      const publicUrl = urlData.publicUrl;
+
+      // Then log before the database update:
+      console.log("HERO UPLOAD: updating hero_profile");
+
+      // 2. UPDATE the existing hero_profile row:
+      //    .from('hero_profile')
+      //    .update({ image_url: publicUrl, updated_at: new Date().toISOString() })
+      //    .eq('id', '7a6ee60a-1659-4633-996e-99b50dd561f0')
+      // Never INSERT into hero_profile.
+      // Never UPSERT hero_profile.
+      const { error: dbError } = await supabase
+        .from('hero_profile')
+        .update({
+          image_url: publicUrl,
+          updated_at: new Date().toISOString(),
+        })
+        .eq('id', '7a6ee60a-1659-4633-996e-99b50dd561f0');
+
+      if (dbError) {
+        console.error("HERO UPLOAD: hero_profile update failed", dbError);
+        const formattedErr = [
+          dbError.message,
+          dbError.code ? `Code: ${dbError.code}` : null,
+          dbError.details ? `Details: ${dbError.details}` : null,
+          dbError.hint ? `Hint: ${dbError.hint}` : null,
+        ].filter(Boolean).join(' | ');
+
+        return {
+          success: false,
+          stage: 'hero_profile_update',
+          url: publicUrl,
+          error: formattedErr || dbError.message,
+        };
+      }
+
+      console.log("HERO UPLOAD: hero_profile update successful");
+      return { success: true, url: publicUrl };
+    } catch (e: unknown) {
+      console.error("HERO UPLOAD: unexpected exception", e);
+      const errObj = e as any;
+      const formattedErr = [
+        errObj?.message || 'Hero image upload failed',
+        errObj?.code ? `Code: ${errObj.code}` : null,
+        errObj?.details ? `Details: ${errObj.details}` : null,
+        errObj?.hint ? `Hint: ${errObj.hint}` : null,
+      ].filter(Boolean).join(' | ');
+
+      return {
+        success: false,
+        stage: 'storage_upload',
+        error: formattedErr,
+      };
     }
   },
 };

@@ -1,6 +1,7 @@
 import React from 'react';
 import {
   LayoutDashboard,
+  Sparkles,
   User,
   FileText,
   GraduationCap,
@@ -41,6 +42,7 @@ export const AdminSidebar: React.FC<AdminSidebarProps> = ({
 
   const NAV_ITEMS = [
     { label: 'Dashboard', path: '/admin', icon: LayoutDashboard },
+    { label: 'Hero Profile', path: '/admin/hero-profile', icon: Sparkles },
     { label: 'Profile', path: '/admin/profile', icon: User },
     { label: 'About', path: '/admin/about', icon: FileText },
     { label: 'Education', path: '/admin/education', icon: GraduationCap },

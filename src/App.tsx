@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { ArrowUp } from 'lucide-react';
 import { PERSONAL_INFO } from './data/portfolioData';
-import { ProjectItem, EducationMilestone, HighlightCard } from './types';
+import { ProjectItem, EducationMilestone, HighlightCard, HeroProfileRecord } from './types';
 import { Navbar } from './components/Navbar';
 import { Hero } from './components/Hero';
 import { About } from './components/About';
@@ -54,6 +54,7 @@ export default function App() {
 
   // Live portfolio states fetched from Supabase (falling back to initial data)
   const [profile, setProfile] = useState<ProfileDataAdmin | undefined>(undefined);
+  const [heroProfile, setHeroProfile] = useState<HeroProfileRecord | null | undefined>(undefined);
   const [about, setAbout] = useState<AboutDataAdmin | undefined>(undefined);
   const [highlights, setHighlights] = useState<HighlightCard[] | undefined>(undefined);
   const [skills, setSkills] = useState<SkillItemAdmin[] | undefined>(undefined);
@@ -73,6 +74,7 @@ export default function App() {
     try {
       const [
         profileData,
+        heroProfileData,
         aboutData,
         highlightsData,
         skillsData,
@@ -82,6 +84,7 @@ export default function App() {
         resumeData,
       ] = await Promise.all([
         portfolioService.getProfile(),
+        portfolioService.getHeroProfile(true), // active row from public.hero_profile
         portfolioService.getAbout(),
         portfolioService.getHighlights(),
         portfolioService.getSkills(),
@@ -92,6 +95,7 @@ export default function App() {
       ]);
 
       if (profileData) setProfile(profileData);
+      if (heroProfileData !== undefined) setHeroProfile(heroProfileData);
       if (aboutData) setAbout(aboutData);
       if (highlightsData) setHighlights(highlightsData);
       if (skillsData) setSkills(skillsData);
@@ -134,6 +138,9 @@ export default function App() {
     if (window.location.pathname !== newPath) {
       window.history.pushState(null, '', newPath);
     }
+    if (!newPath.startsWith('/admin')) {
+      loadPublicData();
+    }
     window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
@@ -174,6 +181,7 @@ export default function App() {
         <Hero
           onOpenResume={() => setIsResumeOpen(true)}
           profile={profile}
+          heroProfile={heroProfile}
           resumeUrl={activeResume?.fileUrl || profile?.resumeUrl}
         />
 

@@ -132,58 +132,114 @@
 @media print {
   @page {
     size: A4 portrait;
-    margin: 12mm 15mm;
+    margin: 10mm 12mm;
   }
 
-  /* Hide entire page chrome */
-  body {
+  /* Reset document and viewport for printable flow */
+  html,
+  body,
+  #root,
+  #root > div {
     background: #ffffff !important;
     color: #0f172a !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    overflow: visible !important;
+    position: static !important;
+    margin: 0 !important;
+    padding: 0 !important;
     -webkit-print-color-adjust: exact !important;
     print-color-adjust: exact !important;
   }
 
-  body * {
-    visibility: hidden;
+  /* Hide all non-printable website layout, chrome, navigation, modals and buttons */
+  nav,
+  header,
+  main,
+  footer,
+  #navbar,
+  #hero-section,
+  #about-section,
+  #skills-section,
+  #projects-section,
+  #education-section,
+  #contact-section,
+  #floating-back-to-top,
+  #back-to-top-btn,
+  #project-modal-backdrop,
+  #project-modal-container,
+  #resume-modal-top-bar,
+  #resume-modal-footer-bar,
+  #resume-close-btn,
+  #resume-print-btn,
+  #resume-save-pdf-btn,
+  .no-print {
+    display: none !important;
+    visibility: hidden !important;
   }
 
-  /* Make only the resume printable content visible and correctly positioned */
-  #resume-printable-content,
-  #resume-printable-content * {
+  /* Modal container resets: convert from fixed backdrop into natural in-flow block */
+  #resume-modal-backdrop {
+    position: static !important;
+    display: block !important;
     visibility: visible !important;
+    width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: transparent !important;
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+    overflow: visible !important;
+    box-shadow: none !important;
+    border: none !important;
+    inset: auto !important;
+    z-index: auto !important;
   }
 
+  #resume-modal-container {
+    position: static !important;
+    display: block !important;
+    visibility: visible !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    color: #0f172a !important;
+    box-shadow: none !important;
+    border: none !important;
+    border-radius: 0 !important;
+    overflow: visible !important;
+  }
+
+  /* Resume Document printable view */
   #resume-printable-content {
-    position: absolute !important;
-    left: 0 !important;
-    top: 0 !important;
+    position: static !important;
+    display: block !important;
+    visibility: visible !important;
     width: 100% !important;
     max-width: 100% !important;
     margin: 0 !important;
     padding: 0 !important;
     background: #ffffff !important;
     color: #0f172a !important;
-    display: block !important;
     overflow: visible !important;
+    height: auto !important;
+    min-height: 0 !important;
+    max-height: none !important;
     box-shadow: none !important;
     border: none !important;
   }
 
-  /* Hide modal headers, buttons, footers and site UI */
-  #resume-modal-top-bar,
-  #resume-modal-footer-bar,
-  #resume-close-btn,
-  #resume-print-btn,
-  #resume-save-pdf-btn,
-  #navbar,
-  nav,
-  header,
-  main,
-  footer,
-  #back-to-top-btn,
-  .no-print {
-    display: none !important;
-    visibility: hidden !important;
+  #resume-printable-content * {
+    visibility: visible !important;
   }
 
   /* Contrast and color adjustments for crisp A4 paper printing */
@@ -196,6 +252,10 @@
   #resume-printable-content .text-neutral-300,
   #resume-printable-content .text-neutral-400 {
     color: #334155 !important;
+  }
+
+  #resume-printable-content .text-neutral-500 {
+    color: #64748b !important;
   }
 
   #resume-printable-content .text-emerald-400,

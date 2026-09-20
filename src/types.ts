@@ -38,6 +38,15 @@ export interface ProjectItem {
   };
 }
 
+export interface ProjectImageRecord {
+  id: string;
+  projectId: string;
+  imageUrl: string;
+  caption?: string;
+  displayOrder: number;
+  createdAt?: string;
+}
+
 export interface HighlightCard {
   id?: string;
   title: string;
@@ -88,4 +97,17 @@ export interface SocialLinkRecord {
   icon?: string;
   displayOrder?: number;
   isActive: boolean;
+}
+
+export interface HeroProfileRecord {
+  id: string;
+  name: string;
+  badge: string;
+  headline: string;
+  description: string;
+  image_url: string | null;
+  image_alt: string | null;
+  is_active: boolean;
+  updated_at?: string;
+  created_at?: string;
 }

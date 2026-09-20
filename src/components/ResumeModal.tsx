@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { X, Printer, Download, ExternalLink, FileText, CheckCircle2 } from 'lucide-react';
 import { PERSONAL_INFO, EDUCATION_DATA, SKILL_CATEGORIES, PROJECTS } from '../data/portfolioData';
 import { ProfileDataAdmin } from '../admin/types';
+import { generateResumePDF } from '../utils/generateResumePdf';
 
 interface ResumeModalProps {
   isOpen?: boolean;
@@ -27,19 +28,28 @@ export const ResumeModal: React.FC<ResumeModalProps> = ({
   const name = profile?.name || PERSONAL_INFO.name;
   const role = profile?.role || PERSONAL_INFO.role;
   const location = profile?.location || PERSONAL_INFO.location;
-  const email = PERSONAL_INFO.links.email;
+  const email = links?.email || PERSONAL_INFO.links.email;
   const degree = profile?.degree || EDUCATION_DATA.degree;
   const institution = profile?.university || EDUCATION_DATA.institution;
   const currentSemester = profile?.currentSemester || EDUCATION_DATA.currentSemester;
   const activeUrl = resumeUrl || profile?.resumeUrl;
+
+  const hasRemoteAsset = Boolean(
+    activeUrl &&
+      activeUrl !== '#' &&
+      (activeUrl.startsWith('http://') ||
+        activeUrl.startsWith('https://') ||
+        activeUrl.startsWith('blob:') ||
+        activeUrl.startsWith('data:'))
+  );
 
   const handlePrint = () => {
     window.print();
   };
 
   const handleSavePDF = async () => {
-    // If a real PDF is uploaded to Supabase Storage, download it directly!
-    if (activeUrl) {
+    // 1. If a real PDF file is uploaded to Supabase Storage, download it directly!
+    if (hasRemoteAsset && activeUrl) {
       const a = document.createElement('a');
       a.href = activeUrl;
       a.download = activeResumeName || `${name.replace(/\s+/g, '_')}_Resume.pdf`;
@@ -50,28 +60,26 @@ export const ResumeModal: React.FC<ResumeModalProps> = ({
       return;
     }
 
+    // 2. Generate clean vector A4 PDF using jsPDF
+    setIsGenerating(true);
     try {
-      setIsGenerating(true);
-      const element = document.getElementById('resume-printable-content');
-      if (!element) {
-        window.print();
-        return;
-      }
-
-      const html2canvas = (await import('html2canvas')).default;
-      const { jsPDF } = await import('jspdf');
-
-      const canvas = await html2canvas(element, {
-        scale: 2,
-        useCORS: true,
-        backgroundColor: '#0a0a0a',
+      generateResumePDF({
+        profile: {
+          name,
+          role,
+          location,
+          degree,
+          university: institution,
+          currentSemester,
+          bio: PERSONAL_INFO.bio,
+        },
+        links: {
+          email,
+          github: links?.github || PERSONAL_INFO.links.github,
+          linkedin: links?.linkedin || PERSONAL_INFO.links.linkedin,
+        },
+        filename: activeResumeName || `${name.replace(/\s+/g, '_')}_Resume.pdf`,
       });
-      const imgData = canvas.toDataURL('image/png');
-      const pdf = new jsPDF('p', 'mm', 'a4');
-      const pdfWidth = pdf.internal.pageSize.getWidth();
-      const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-      pdf.addImage(imgData, 'PNG', 0, 0, pdfWidth, pdfHeight);
-      pdf.save(`${name.replace(/\s+/g, '_')}_Resume.pdf`);
     } catch (err) {
       console.error('PDF generation failed, falling back to print:', err);
       window.print();
@@ -99,14 +107,14 @@ export const ResumeModal: React.FC<ResumeModalProps> = ({
             <span className="text-sm font-semibold tracking-wide text-neutral-200">
               {activeResumeName || `${name.replace(/\s+/g, '_')}_Resume.pdf`}
             </span>
-            {activeUrl && (
+            {hasRemoteAsset && (
               <span className="text-[10px] font-mono px-2 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
                 Live Supabase Asset
               </span>
             )}
           </div>
           <div className="flex items-center gap-2">
-            {activeUrl && (
+            {hasRemoteAsset && activeUrl && (
               <a
                 href={activeUrl}
                 target="_blank"
@@ -121,16 +129,16 @@ export const ResumeModal: React.FC<ResumeModalProps> = ({
               onClick={handleSavePDF}
               id="resume-save-pdf-btn"
               disabled={isGenerating}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-emerald-600 hover:bg-emerald-500 active:scale-95 disabled:opacity-50 rounded-lg transition-all shadow-sm"
-              title="Save Resume as PDF"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-emerald-600 hover:bg-emerald-500 active:scale-95 disabled:opacity-50 rounded-lg transition-all shadow-sm cursor-pointer"
+              title="Download Resume as PDF"
             >
               <Download className="w-3.5 h-3.5" />
-              <span>{isGenerating ? 'Generating...' : 'Download PDF'}</span>
+              <span>{isGenerating ? 'Generating...' : 'Download Resume'}</span>
             </button>
             <button
               onClick={handlePrint}
               id="resume-print-btn"
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-neutral-300 bg-neutral-800 hover:bg-neutral-700 hover:text-white active:scale-95 rounded-lg transition-all border border-neutral-700/60"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-neutral-300 bg-neutral-800 hover:bg-neutral-700 hover:text-white active:scale-95 rounded-lg transition-all border border-neutral-700/60 cursor-pointer"
               title="Print Resume"
             >
               <Printer className="w-3.5 h-3.5" />
@@ -139,7 +147,7 @@ export const ResumeModal: React.FC<ResumeModalProps> = ({
             <button
               onClick={onClose}
               id="resume-close-btn"
-              className="p-1.5 rounded-lg text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800 transition-colors ml-1"
+              className="p-1.5 rounded-lg text-neutral-400 hover:text-neutral-200 hover:bg-neutral-800 transition-colors ml-1 cursor-pointer"
               aria-label="Close modal"
             >
               <X className="w-5 h-5" />

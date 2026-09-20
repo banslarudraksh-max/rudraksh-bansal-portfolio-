@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   User,
   Save,
@@ -24,6 +24,10 @@ export const ProfilePage: React.FC = () => {
   const [formData, setFormData] = useState<ProfileDataAdmin>({ ...profile });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isUploadingAvatar, setIsUploadingAvatar] = useState(false);
+
+  useEffect(() => {
+    setFormData({ ...profile });
+  }, [profile]);
 
   const handleChange = (field: keyof ProfileDataAdmin, value: string) => {
     setFormData((prev) => ({ ...prev, [field]: value }));

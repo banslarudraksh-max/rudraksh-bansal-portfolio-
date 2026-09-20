@@ -1,13 +1,13 @@
-import React, { useState } from 'react';
-import { FileText, Save, Sparkles, Plus, Trash2, Edit, Target } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { FileText, Save, Sparkles, Plus, Trash2, Edit, Target, RefreshCw } from 'lucide-react';
 import { useAdminData } from '../context/AdminDataContext';
 import { useToast } from '../context/ToastContext';
 import { FormInput, FormTextarea } from '../components/FormControls';
 import { HighlightCard, ValueCard } from '../../types';
 
 export const AboutPage: React.FC = () => {
-  const { about, updateAbout, highlights, updateHighlights, values, updateValues } = useAdminData();
-  const { success, error } = useToast();
+  const { about, updateAbout, highlights, updateHighlights, values, updateValues, isLoading } = useAdminData();
+  const { success, error, info } = useToast();
 
   const [headingInput, setHeadingInput] = useState(about.heading || 'About Me');
   const [bioInput, setBioInput] = useState(about.description || '');
@@ -15,6 +15,24 @@ export const AboutPage: React.FC = () => {
   const [highlightCards, setHighlightCards] = useState<HighlightCard[]>([...highlights]);
   const [valueCards, setValueCards] = useState<ValueCard[]>([...values]);
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    setHeadingInput(about.heading || 'About Me');
+    setBioInput(about.description || '');
+    setCareerObjectiveInput(about.careerObjective || '');
+  }, [about]);
+
+  useEffect(() => {
+    if (highlights && highlights.length > 0) {
+      setHighlightCards([...highlights]);
+    }
+  }, [highlights]);
+
+  useEffect(() => {
+    if (values && values.length > 0) {
+      setValueCards([...values]);
+    }
+  }, [values]);
 
   const handleSaveAbout = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -32,13 +50,31 @@ export const AboutPage: React.FC = () => {
       if (resAbout.success && resHl.success) {
         success('About Section Updated', 'Biography, career objective, and highlights saved to Supabase.');
       } else {
-        error('Notice', resAbout.error || resHl.error || 'Saved changes locally. Run SQL schema in Supabase if tables not yet created.');
+        error('Notice', resAbout.error || resHl.error || 'Saved changes locally.');
       }
     } catch (err: unknown) {
       error('Save Error', err instanceof Error ? err.message : 'Failed to save');
     } finally {
       setIsSubmitting(false);
     }
+  };
+
+  const handleAddHighlight = () => {
+    const newCard: HighlightCard = {
+      id: `hl-${Date.now()}`,
+      title: 'New Pillar',
+      subtitle: 'Academic Focus',
+      description: 'Describe this technical pillar or academic accomplishment.',
+      iconName: 'Code',
+      displayOrder: highlightCards.length + 1,
+    };
+    setHighlightCards((prev) => [...prev, newCard]);
+    info('Pillar Added', 'New highlight card added. Click Save All Changes to persist to Supabase.');
+  };
+
+  const handleDeleteHighlight = (index: number) => {
+    setHighlightCards((prev) => prev.filter((_, idx) => idx !== index));
+    info('Pillar Removed', 'Highlight card removed. Click Save All Changes to commit.');
   };
 
   const handleHighlightChange = (index: number, field: keyof HighlightCard, val: string) => {
@@ -73,8 +109,8 @@ export const AboutPage: React.FC = () => {
           disabled={isSubmitting}
           className="inline-flex items-center gap-2 px-5 py-2 text-xs font-bold text-neutral-950 bg-emerald-500 hover:bg-emerald-400 rounded-xl transition-all shadow-lg shadow-emerald-950/40 cursor-pointer disabled:opacity-60"
         >
-          <Save className="w-4 h-4" />
-          <span>{isSubmitting ? 'Saving...' : 'Save All Changes'}</span>
+          {isSubmitting ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+          <span>{isSubmitting ? 'Saving to Supabase...' : 'Save All Changes'}</span>
         </button>
       </div>
 
@@ -125,22 +161,44 @@ export const AboutPage: React.FC = () => {
 
         {/* 3. Highlight Cards */}
         <div className="p-6 rounded-2xl bg-neutral-900/60 border border-neutral-800/90 backdrop-blur-xl shadow-lg space-y-4">
-          <div className="flex items-center gap-2 text-sm font-bold text-white pb-3 border-b border-neutral-800">
-            <Sparkles className="w-4 h-4 text-cyan-400" />
-            <span>Highlights & Academic Pillars (3 Cards)</span>
+          <div className="flex items-center justify-between pb-3 border-b border-neutral-800">
+            <div className="flex items-center gap-2 text-sm font-bold text-white">
+              <Sparkles className="w-4 h-4 text-cyan-400" />
+              <span>Highlights & Academic Pillars (public.about_highlights)</span>
+            </div>
+            <button
+              type="button"
+              onClick={handleAddHighlight}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 border border-cyan-500/30 transition-all cursor-pointer"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              <span>Add Pillar</span>
+            </button>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
             {highlightCards.map((card, idx) => (
               <div
-                key={idx}
-                className="p-4 rounded-xl bg-neutral-950/70 border border-neutral-800 space-y-3"
+                key={card.id || idx}
+                className="p-4 rounded-xl bg-neutral-950/70 border border-neutral-800 space-y-3 relative group"
               >
                 <div className="flex items-center justify-between">
                   <span className="text-[10px] font-mono uppercase text-emerald-400 font-bold">
                     Pillar #{idx + 1}
                   </span>
-                  <span className="text-[10px] font-mono text-neutral-400">{card.iconName}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-mono text-neutral-400">{card.iconName}</span>
+                    {highlightCards.length > 1 && (
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteHighlight(idx)}
+                        className="text-neutral-500 hover:text-rose-400 p-1 rounded transition-colors"
+                        title="Delete Pillar"
+                      >
+                        <Trash2 className="w-3.5 h-3.5" />
+                      </button>
+                    )}
+                  </div>
                 </div>
 
                 <FormInput

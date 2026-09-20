@@ -1,4 +1,6 @@
-import { ProjectItem, EducationMilestone, HighlightCard, ValueCard, ResumeRecord, SocialLinkRecord } from '../types';
+import { ProjectItem, EducationMilestone, HighlightCard, ValueCard, ResumeRecord, SocialLinkRecord, HeroProfileRecord } from '../types';
+
+export type { HeroProfileRecord };
 
 export interface AdminUser {
   id: string;
@@ -115,4 +117,4 @@ export interface ContactInfoAdmin {
   preferredContactMethod: string;
 }
 
-export type { ResumeRecord, ProjectItem, HighlightCard, EducationMilestone, SocialLinkRecord } from '../types';
+export type { ResumeRecord, ProjectItem, ProjectImageRecord, HighlightCard, EducationMilestone, SocialLinkRecord } from '../types';

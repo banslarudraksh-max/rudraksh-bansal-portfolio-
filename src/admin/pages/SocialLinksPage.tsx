@@ -1,19 +1,35 @@
-import React, { useState } from 'react';
-import { Share2, Save, ExternalLink, Github, Linkedin, Mail, Twitter, Code2 } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Share2, Save, ExternalLink, Github, Linkedin, Mail, Twitter, Code2, RefreshCw } from 'lucide-react';
 import { useAdminData } from '../context/AdminDataContext';
 import { useToast } from '../context/ToastContext';
 import { FormInput } from '../components/FormControls';
 
 export const SocialLinksPage: React.FC = () => {
   const { socialLinks, updateSocialLinks } = useAdminData();
-  const { success, info } = useToast();
+  const { success, info, error } = useToast();
 
   const [formData, setFormData] = useState({ ...socialLinks });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSave = (e: React.FormEvent) => {
+  useEffect(() => {
+    setFormData({ ...socialLinks });
+  }, [socialLinks]);
+
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    updateSocialLinks(formData);
-    success('Links Updated', 'Developer profiles & social links saved.');
+    setIsSubmitting(true);
+    try {
+      const res = await updateSocialLinks(formData);
+      if (res.success) {
+        success('Links Updated', 'Developer profiles & social links saved to Supabase.');
+      } else {
+        error('Notice', res.error || 'Saved changes locally.');
+      }
+    } catch (err: unknown) {
+      error('Save Error', err instanceof Error ? err.message : 'Failed to save');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleTestLink = (url?: string) => {
@@ -36,10 +52,11 @@ export const SocialLinksPage: React.FC = () => {
 
         <button
           onClick={handleSave}
-          className="inline-flex items-center gap-2 px-5 py-2 text-xs font-bold text-neutral-950 bg-emerald-500 hover:bg-emerald-400 rounded-xl transition-all shadow-lg shadow-emerald-950/40 cursor-pointer"
+          disabled={isSubmitting}
+          className="inline-flex items-center gap-2 px-5 py-2 text-xs font-bold text-neutral-950 bg-emerald-500 hover:bg-emerald-400 rounded-xl transition-all shadow-lg shadow-emerald-950/40 cursor-pointer disabled:opacity-60"
         >
-          <Save className="w-4 h-4" />
-          <span>Save Changes</span>
+          {isSubmitting ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+          <span>{isSubmitting ? 'Saving...' : 'Save Changes'}</span>
         </button>
       </div>
 

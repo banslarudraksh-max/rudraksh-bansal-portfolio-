@@ -1,19 +1,35 @@
-import React, { useState } from 'react';
-import { Mail, Save, Clock, MapPin, MessageSquare, Globe } from 'lucide-react';
+import React, { useState, useEffect } from 'react';
+import { Mail, Save, Clock, MapPin, MessageSquare, Globe, RefreshCw } from 'lucide-react';
 import { useAdminData } from '../context/AdminDataContext';
 import { useToast } from '../context/ToastContext';
 import { FormInput, FormSelect } from '../components/FormControls';
 
 export const ContactPage: React.FC = () => {
   const { contactInfo, updateContactInfo } = useAdminData();
-  const { success } = useToast();
+  const { success, error } = useToast();
 
   const [formData, setFormData] = useState({ ...contactInfo });
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleSave = (e: React.FormEvent) => {
+  useEffect(() => {
+    setFormData({ ...contactInfo });
+  }, [contactInfo]);
+
+  const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
-    updateContactInfo(formData);
-    success('Contact Info Saved', 'Public communication parameters updated.');
+    setIsSubmitting(true);
+    try {
+      const res = await updateContactInfo(formData);
+      if (res.success) {
+        success('Contact Info Saved', 'Public communication parameters saved to Supabase.');
+      } else {
+        error('Notice', res.error || 'Saved changes locally.');
+      }
+    } catch (err: unknown) {
+      error('Error', err instanceof Error ? err.message : 'Failed to save contact info');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
@@ -22,16 +38,17 @@ export const ContactPage: React.FC = () => {
         <div>
           <h2 className="text-xl font-bold text-white tracking-tight">Contact Information</h2>
           <p className="text-xs text-neutral-400 mt-0.5">
-            Configure direct contact channels, availability guarantees, and geographic timezone.
+            Configure direct contact channels, availability guarantees, and geographic timezone (public.contact_info).
           </p>
         </div>
 
         <button
           onClick={handleSave}
-          className="inline-flex items-center gap-2 px-5 py-2 text-xs font-bold text-neutral-950 bg-emerald-500 hover:bg-emerald-400 rounded-xl transition-all shadow-lg shadow-emerald-950/40 cursor-pointer"
+          disabled={isSubmitting}
+          className="inline-flex items-center gap-2 px-5 py-2 text-xs font-bold text-neutral-950 bg-emerald-500 hover:bg-emerald-400 rounded-xl transition-all shadow-lg shadow-emerald-950/40 cursor-pointer disabled:opacity-60"
         >
-          <Save className="w-4 h-4" />
-          <span>Save Changes</span>
+          {isSubmitting ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
+          <span>{isSubmitting ? 'Saving...' : 'Save Changes'}</span>
         </button>
       </div>
 

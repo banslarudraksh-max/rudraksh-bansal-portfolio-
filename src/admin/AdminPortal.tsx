@@ -4,6 +4,7 @@ import { AdminLayout } from './components/AdminLayout';
 import { AdminLogin } from './pages/AdminLogin';
 import { DashboardHome } from './pages/DashboardHome';
 import { ProfilePage } from './pages/ProfilePage';
+import { HeroProfilePage } from './pages/HeroProfilePage';
 import { AboutPage } from './pages/AboutPage';
 import { EducationPage } from './pages/EducationPage';
 import { SkillsPage } from './pages/SkillsPage';
@@ -60,6 +61,8 @@ export const AdminPortal: React.FC<AdminPortalProps> = ({ currentPath, onNavigat
   // Subpage router inside authenticated AdminLayout
   const renderCurrentPage = () => {
     switch (currentPath) {
+      case '/admin/hero-profile':
+        return <HeroProfilePage />;
       case '/admin/profile':
         return <ProfilePage />;
       case '/admin/about':

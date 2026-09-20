@@ -54,15 +54,27 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       }
 
       try {
+        // 1. On Admin Dashboard load, call supabase.auth.getSession()
         const { data, error: sessionError } = await supabase.auth.getSession();
-        if (sessionError) {
-          console.warn('Supabase getSession notice:', sessionError.message);
-          if (isMounted) {
-            setUser(null);
+        let session = data?.session;
+
+        // 2. If the session is missing, call supabase.auth.refreshSession()
+        if (!session || sessionError) {
+          try {
+            const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+            if (!refreshError && refreshData?.session) {
+              session = refreshData.session;
+            } else if (refreshError) {
+              console.warn('Initial session refresh notice:', refreshError.message);
+            }
+          } catch (refEx) {
+            console.warn('Session refresh exception on load:', refEx);
           }
-        } else if (data?.session?.user) {
+        }
+
+        if (session?.user) {
           if (isMounted) {
-            setUser(mapSupabaseUser(data.session.user));
+            setUser(mapSupabaseUser(session.user));
           }
         } else {
           if (isMounted) {
@@ -75,6 +87,7 @@ export const AdminAuthProvider: React.FC<{ children: React.ReactNode }> = ({ chi
           setUser(null);
         }
       } finally {
+        // 5. Wait for the initial auth session check to finish before rendering protected admin functionality
         if (isMounted) {
           setIsLoading(false);
         }

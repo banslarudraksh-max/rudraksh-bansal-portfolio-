@@ -12,6 +12,7 @@ import {
   DEFAULT_CONTACT_INFO,
   DEFAULT_RESUMES,
   DEFAULT_SITE_SETTINGS,
+  DEFAULT_HERO_PROFILE,
 } from '../../lib/portfolioService';
 import {
   ProfileDataAdmin,
@@ -23,7 +24,16 @@ import {
   SiteSettingsData,
   ContactInfoAdmin,
 } from '../types';
-import { ProjectItem, HighlightCard, ValueCard, EducationMilestone, ResumeRecord, SocialLinkRecord } from '../../types';
+import {
+  ProjectItem,
+  ProjectImageRecord,
+  HighlightCard,
+  ValueCard,
+  EducationMilestone,
+  ResumeRecord,
+  SocialLinkRecord,
+  HeroProfileRecord,
+} from '../../types';
 import { WHAT_I_BRING } from '../../data/portfolioData';
 
 interface AdminDataContextType {
@@ -34,12 +44,23 @@ interface AdminDataContextType {
   profile: ProfileDataAdmin;
   updateProfile: (data: Partial<ProfileDataAdmin>) => Promise<{ success: boolean; error?: string }>;
 
+  // Hero Profile (public.hero_profile)
+  heroProfile: HeroProfileRecord;
+  updateHeroProfile: (data: Partial<HeroProfileRecord>) => Promise<{ success: boolean; data?: HeroProfileRecord; error?: string }>;
+  uploadHeroImage: (file: File) => Promise<{ success: boolean; url?: string; stage?: 'storage_upload' | 'hero_profile_update' | 'auth'; error?: string }>;
+
   // Projects
   projects: ProjectItem[];
   addProject: (project: Omit<ProjectItem, 'id'>) => Promise<{ success: boolean; id?: string; error?: string }>;
   updateProject: (id: string, project: Partial<ProjectItem>) => Promise<{ success: boolean; error?: string }>;
   deleteProject: (id: string) => Promise<{ success: boolean; error?: string }>;
   duplicateProject: (id: string) => Promise<{ success: boolean; id?: string; error?: string }>;
+
+  // Project Images
+  projectImages: ProjectImageRecord[];
+  addProjectImage: (img: Omit<ProjectImageRecord, 'id' | 'createdAt'>) => Promise<{ success: boolean; id?: string; error?: string }>;
+  updateProjectImage: (id: string, img: Partial<ProjectImageRecord>) => Promise<{ success: boolean; error?: string }>;
+  deleteProjectImage: (id: string) => Promise<{ success: boolean; error?: string }>;
 
   // Skills
   skills: SkillItemAdmin[];
@@ -56,6 +77,8 @@ interface AdminDataContextType {
   updateAbout: (data: Partial<AboutDataAdmin>) => Promise<{ success: boolean; error?: string }>;
   highlights: HighlightCard[];
   updateHighlights: (cards: HighlightCard[]) => Promise<{ success: boolean; error?: string }>;
+  addHighlight: (card: Omit<HighlightCard, 'id'>) => Promise<{ success: boolean; id?: string; error?: string }>;
+  deleteHighlight: (id: string) => Promise<{ success: boolean; error?: string }>;
   values: ValueCard[];
   updateValues: (vals: ValueCard[]) => void;
 
@@ -145,12 +168,14 @@ export const AdminDataProvider: React.FC<{ children: React.ReactNode }> = ({ chi
 
   // States
   const [profile, setProfile] = useState<ProfileDataAdmin>(DEFAULT_PROFILE);
+  const [heroProfile, setHeroProfile] = useState<HeroProfileRecord>(DEFAULT_HERO_PROFILE);
   const [about, setAbout] = useState<AboutDataAdmin>(DEFAULT_ABOUT);
   const [highlights, setHighlights] = useState<HighlightCard[]>(DEFAULT_HIGHLIGHTS);
   const [values, setValues] = useState<ValueCard[]>(WHAT_I_BRING);
   const [educationList, setEducationList] = useState<EducationMilestone[]>(DEFAULT_EDUCATION_LIST);
   const [skills, setSkills] = useState<SkillItemAdmin[]>(DEFAULT_SKILLS_LIST);
   const [projects, setProjects] = useState<ProjectItem[]>([]);
+  const [projectImages, setProjectImages] = useState<ProjectImageRecord[]>([]);
   const [experiences, setExperiences] = useState<ExperienceItem[]>(DEFAULT_EXPERIENCES_LIST);
   const [internships, setInternships] = useState<InternshipItem[]>(DEFAULT_INTERNSHIPS_LIST);
   const [resumes, setResumes] = useState<ResumeRecord[]>(DEFAULT_RESUMES);
@@ -194,11 +219,13 @@ export const AdminDataProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     try {
       const [
         p,
+        hp,
         ab,
         hl,
         edu,
         sk,
         proj,
+        pImg,
         exp,
         intern,
         res,
@@ -208,11 +235,13 @@ export const AdminDataProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         site,
       ] = await Promise.all([
         portfolioService.getProfile(),
+        portfolioService.getHeroProfile(false),
         portfolioService.getAbout(),
         portfolioService.getHighlights(),
         portfolioService.getEducation(),
         portfolioService.getSkills(),
         portfolioService.getProjects(true),
+        portfolioService.getProjectImages(),
         portfolioService.getExperiences(),
         portfolioService.getInternships(),
         portfolioService.getResumes(),
@@ -223,11 +252,13 @@ export const AdminDataProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       ]);
 
       if (p) setProfile(p);
+      if (hp) setHeroProfile(hp);
       if (ab) setAbout(ab);
       if (hl && hl.length > 0) setHighlights(hl);
       if (edu && edu.length > 0) setEducationList(edu);
       if (sk && sk.length > 0) setSkills(sk);
       if (proj && proj.length > 0) setProjects(proj);
+      if (pImg) setProjectImages(pImg);
       if (exp && exp.length > 0) setExperiences(exp);
       if (intern && intern.length > 0) setInternships(intern);
       if (res && res.length > 0) setResumes(res);
@@ -253,6 +284,20 @@ export const AdminDataProvider: React.FC<{ children: React.ReactNode }> = ({ chi
     return res;
   };
 
+  // Hero Profile
+  const updateHeroProfile = async (data: Partial<HeroProfileRecord>) => {
+    setHeroProfile((prev) => ({ ...prev, ...data }));
+    const res = await portfolioService.updateHeroProfile(data);
+    if (res.success && res.data) {
+      setHeroProfile(res.data);
+    }
+    return res;
+  };
+
+  const uploadHeroImage = async (file: File) => {
+    return await portfolioService.uploadHeroImage(file);
+  };
+
   // About
   const updateBio = async (newBio: string) => {
     setAbout((prev) => ({ ...prev, description: newBio }));
@@ -267,6 +312,21 @@ export const AdminDataProvider: React.FC<{ children: React.ReactNode }> = ({ chi
   const updateHighlights = async (cards: HighlightCard[]) => {
     setHighlights(cards);
     return await portfolioService.saveHighlights(cards);
+  };
+
+  const addHighlight = async (card: Omit<HighlightCard, 'id'>) => {
+    const tempId = `hl-${Date.now()}`;
+    setHighlights((prev) => [...prev, { ...card, id: tempId }]);
+    const res = await portfolioService.addHighlight(card);
+    if (res.success && res.id) {
+      setHighlights((prev) => prev.map((h) => (h.id === tempId ? { ...h, id: res.id } : h)));
+    }
+    return res;
+  };
+
+  const deleteHighlight = async (id: string) => {
+    setHighlights((prev) => prev.filter((h) => h.id !== id));
+    return await portfolioService.deleteHighlight(id);
   };
 
   const updateValues = (vals: ValueCard[]) => {
@@ -371,6 +431,29 @@ export const AdminDataProvider: React.FC<{ children: React.ReactNode }> = ({ chi
       setProjects(refreshed);
     }
     return res;
+  };
+
+  // Project Images
+  const addProjectImage = async (img: Omit<ProjectImageRecord, 'id' | 'createdAt'>) => {
+    const tempId = `pimg-${Date.now()}`;
+    const newImg: ProjectImageRecord = { ...img, id: tempId, createdAt: new Date().toISOString() };
+    setProjectImages((prev) => [...prev, newImg]);
+
+    const res = await portfolioService.addProjectImage(img);
+    if (res.success && res.id) {
+      setProjectImages((prev) => prev.map((item) => (item.id === tempId ? { ...item, id: res.id } : item)));
+    }
+    return res;
+  };
+
+  const updateProjectImage = async (id: string, img: Partial<ProjectImageRecord>) => {
+    setProjectImages((prev) => prev.map((item) => (item.id === id ? { ...item, ...img } : item)));
+    return await portfolioService.updateProjectImage(id, img);
+  };
+
+  const deleteProjectImage = async (id: string) => {
+    setProjectImages((prev) => prev.filter((item) => item.id !== id));
+    return await portfolioService.deleteProjectImage(id);
   };
 
   // Experience
@@ -571,11 +654,18 @@ export const AdminDataProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         refreshData: loadAllData,
         profile,
         updateProfile,
+        heroProfile,
+        updateHeroProfile,
+        uploadHeroImage,
         projects,
         addProject,
         updateProject,
         deleteProject,
         duplicateProject,
+        projectImages,
+        addProjectImage,
+        updateProjectImage,
+        deleteProjectImage,
         skills,
         addSkill,
         updateSkill,
@@ -588,6 +678,8 @@ export const AdminDataProvider: React.FC<{ children: React.ReactNode }> = ({ chi
         updateAbout,
         highlights,
         updateHighlights,
+        addHighlight,
+        deleteHighlight,
         values,
         updateValues,
         education,

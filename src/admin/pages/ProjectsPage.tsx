@@ -65,6 +65,9 @@ export const ProjectsPage: React.FC = () => {
     deleteProject,
     duplicateProject,
     uploadAsset,
+    projectImages,
+    addProjectImage,
+    deleteProjectImage,
   } = useAdminData();
   const { success, error, info } = useToast();
 
@@ -74,6 +77,50 @@ export const ProjectsPage: React.FC = () => {
   const [formData, setFormData] = useState<ProjectFormData>(DEFAULT_FORM);
   const [viewMode, setViewMode] = useState<'table' | 'cards'>('table');
   const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [isUploadingGallery, setIsUploadingGallery] = useState(false);
+
+  const currentProjectImages = editingId
+    ? projectImages.filter((img) => img.projectId === editingId)
+    : [];
+
+  const handleAddGalleryImage = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file || !editingId) return;
+
+    setIsUploadingGallery(true);
+    try {
+      const res = await uploadAsset(file, 'projects');
+      if (res.success && res.url) {
+        await addProjectImage({
+          projectId: editingId,
+          imageUrl: res.url,
+          caption: file.name.replace(/\.[^/.]+$/, ''),
+          displayOrder: currentProjectImages.length + 1,
+        });
+        success('Gallery Image Added', 'Screenshot saved to public.project_images in Supabase.');
+      } else {
+        error('Upload Error', res.error || 'Failed to upload image.');
+      }
+    } catch (err: unknown) {
+      error('Upload Error', err instanceof Error ? err.message : 'Error uploading');
+    } finally {
+      setIsUploadingGallery(false);
+      e.target.value = '';
+    }
+  };
+
+  const handleDeleteGalleryImage = async (imageId: string) => {
+    try {
+      const res = await deleteProjectImage(imageId);
+      if (res.success) {
+        info('Image Removed', 'Removed screenshot from project gallery.');
+      } else {
+        error('Error', res.error || 'Failed to delete image');
+      }
+    } catch (err: unknown) {
+      error('Error', err instanceof Error ? err.message : 'Error deleting');
+    }
+  };
 
   const handleOpenAdd = () => {
     setEditingId(null);
@@ -573,6 +620,62 @@ export const ProjectsPage: React.FC = () => {
               </div>
             </div>
           </div>
+
+          {/* Project Gallery Images (public.project_images) */}
+          {editingId && (
+            <div className="p-4 rounded-xl bg-neutral-950/70 border border-neutral-800 space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <ImageIcon className="w-4 h-4 text-emerald-400" />
+                  <label className="text-xs font-semibold text-neutral-300">
+                    Additional Screenshots & Gallery (public.project_images)
+                  </label>
+                </div>
+                <div className="relative inline-block">
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleAddGalleryImage}
+                    disabled={isUploadingGallery}
+                    className="absolute inset-0 opacity-0 cursor-pointer w-full h-full z-10"
+                  />
+                  <button
+                    type="button"
+                    disabled={isUploadingGallery}
+                    className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 transition-all cursor-pointer"
+                  >
+                    {isUploadingGallery ? <RefreshCw className="w-3 h-3 animate-spin" /> : <Plus className="w-3 h-3" />}
+                    <span>{isUploadingGallery ? 'Uploading...' : 'Add Gallery Screenshot'}</span>
+                  </button>
+                </div>
+              </div>
+
+              {currentProjectImages.length === 0 ? (
+                <p className="text-[11px] text-neutral-500 italic">No additional gallery screenshots for this project yet.</p>
+              ) : (
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 pt-1">
+                  {currentProjectImages.map((img) => (
+                    <div key={img.id} className="relative group rounded-lg overflow-hidden border border-neutral-800 bg-neutral-900 aspect-video">
+                      <img src={img.imageUrl} alt={img.caption || 'Project screenshot'} className="w-full h-full object-cover" />
+                      <button
+                        type="button"
+                        onClick={() => handleDeleteGalleryImage(img.id)}
+                        className="absolute top-1.5 right-1.5 p-1 rounded-md bg-neutral-950/80 text-rose-400 hover:bg-rose-500 hover:text-white transition-colors cursor-pointer"
+                        title="Delete Image"
+                      >
+                        <Trash2 className="w-3 h-3" />
+                      </button>
+                      {img.caption && (
+                        <span className="absolute bottom-0 inset-x-0 bg-neutral-950/80 text-[10px] text-neutral-300 px-1.5 py-0.5 truncate">
+                          {img.caption}
+                        </span>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
 
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
             <FormSelect
