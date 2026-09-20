@@ -196,7 +196,7 @@ print(f"Status: {dev.status}")`;
                         <div className="text-xs font-bold text-white tracking-wide truncate">{name}</div>
                         <div className="text-[10px] font-mono text-emerald-400 flex items-center gap-1.5 mt-0.5">
                           <Sparkles className="w-3 h-3 shrink-0" />
-                          <span className="truncate">Software Engineering & AI-ML</span>
+                          <span className="truncate">AI-ML & WEB DEVELOPMENT</span>
                         </div>
                       </div>
                       <div className="px-2 py-1 rounded-md bg-neutral-900 border border-neutral-800 text-[10px] font-mono text-neutral-300 shrink-0">
