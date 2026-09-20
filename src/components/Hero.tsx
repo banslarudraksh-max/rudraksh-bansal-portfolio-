@@ -172,11 +172,15 @@ print(f"Status: {dev.status}")`;
                   {/* Main Portrait Frame */}
                   <div className="relative w-full aspect-[4/5] rounded-2xl overflow-hidden bg-neutral-950 border border-neutral-800/60 shadow-inner">
                     <img
-                      src={imageUrl}
-                      alt={imageAlt}
-                      className="w-full h-full object-cover object-top filter contrast-[1.02] group-hover:scale-[1.02] transition-transform duration-700"
-                      loading="eager"
-                    />
+                    src={imageUrl}
+                     alt={imageAlt}
+                       width={800}
+                       height={1000}
+                       className="w-full h-full object-cover object-top filter contrast-[1.02] group-hover:scale-[1.02] transition-transform duration-700"
+                        loading="eager"
+                        fetchPriority="high"
+                         decoding="async"
+                        />
 
                     {/* Gradient Overlay for Readability */}
                     <div className="absolute inset-0 bg-gradient-to-t from-neutral-950/90 via-neutral-950/15 to-transparent pointer-events-none" />
