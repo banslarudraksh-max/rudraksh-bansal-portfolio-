@@ -34,11 +34,11 @@ export const ADMIN_USER_ID = '780ea72d-e169-41fa-b627-9665a5be2d26';
 export const DEFAULT_PROFILE: ProfileDataAdmin = {
   name: PERSONAL_INFO.name,
   role: 'B.Tech CSE Student & Aspiring Developer',
-  headline: 'B.Tech CSE Student & Aspiring Software Developer',
+  headline: 'B.Tech CSE Student(AI-ML) & Aspiring Software Developer',
   introduction: PERSONAL_INFO.tagline,
   avatarUrl: '',
   location: PERSONAL_INFO.location,
-  degree: 'B.Tech in Computer Science and Engineering',
+  degree: 'B.Tech in Computer Science and Engineering(AI-ML)',
   university: 'Dr. A.P.J. Abdul Kalam Technical University (AKTU)',
   currentSemester: '3rd Semester',
   specialization: 'Artificial Intelligence & Machine Learning',
@@ -53,7 +53,7 @@ export const DEFAULT_HERO_PROFILE: HeroProfileRecord = {
   id: EXISTING_HERO_PROFILE_ID,
   name: PERSONAL_INFO.name,
   badge: 'Available for Internships',
-  headline: 'B.Tech CSE Student & Aspiring Software Developer',
+  headline: 'B.Tech CSE Student(AI-ML)& Aspiring Software Developer',
   description: 'Building practical solutions with code, creativity and emerging AI technologies.',
   image_url: null,
   image_alt: 'Rudraksh Bansal - Professional Developer Profile',
@@ -70,8 +70,8 @@ export const DEFAULT_ABOUT: AboutDataAdmin = {
 export const DEFAULT_HIGHLIGHTS: HighlightCard[] = [
   {
     title: 'Computer Science Undergraduate',
-    subtitle: 'AKTU • 2024-2028',
-    description: 'Pursuing B.Tech in CSE with focus on software engineering fundamentals and AI-ML.',
+    subtitle: 'AKTU • 2024-2029',
+    description: 'Pursuing B.Tech in CSE(AI-ML) with focus on software engineering fundamentals and AI-ML.',
     iconName: 'GraduationCap',
     displayOrder: 1,
   },
@@ -98,8 +98,8 @@ export const DEFAULT_EDUCATION_LIST: EducationMilestone[] = [
     institution: 'Affiliated College, AKTU',
     university: 'Dr. A.P.J. Abdul Kalam Technical University (AKTU), Lucknow',
     startYear: '2024',
-    endYear: '2028',
-    period: '2024 – 2028',
+    endYear: '2029',
+    period: '2024 – 2029',
     currentSemester: '3rd Semester',
     specialization: 'Artificial Intelligence & Machine Learning',
     description:
@@ -154,7 +154,7 @@ export const DEFAULT_EXPERIENCES_LIST: ExperienceItem[] = [
     title: 'Computer Science & AI Academic Scholar',
     company: 'Dr. A.P.J. Abdul Kalam Technical University (AKTU)',
     location: 'Uttar Pradesh, India',
-    period: '2024 – 2028',
+    period: '2024 – 2029',
     type: 'Full-time',
     description: 'Focusing on algorithmic problem-solving, data structures, discrete mathematics, and emerging machine learning frameworks.',
     technologies: ['Data Structures', 'Algorithms', 'Python', 'C++'],
@@ -171,12 +171,12 @@ export const DEFAULT_EXPERIENCES_LIST: ExperienceItem[] = [
 export const DEFAULT_INTERNSHIPS_LIST: InternshipItem[] = [
   {
     id: 'int-1',
-    roleTitle: 'Software Engineering / Web Development Intern',
+    roleTitle: 'Software Engineering / Web Development Intern / AI-ML Intern',
     organization: 'Tech Startups & Product Teams',
     targetCompanyType: 'Tech Startups & Product Teams',
     status: 'Open to Offers',
     preferredDomain: 'Frontend Development / Full Stack / AI Applications',
-    period: 'Summer 2026 / Immediate Availability',
+    period: 'Summer 2027 / Immediate Availability',
     description: 'Seeking practical internship opportunities to contribute high-quality code, collaborate with engineering mentors, and build real-world products.',
     technologies: ['React', 'TypeScript', 'Python', 'Node.js', 'Tailwind CSS'],
     responsibilities: [
@@ -197,7 +197,7 @@ export const DEFAULT_SOCIAL_LINKS: SocialLinkRecord[] = [
 
 export const DEFAULT_CONTACT_INFO: ContactInfoAdmin = {
   email: PERSONAL_INFO.links.email,
-  phone: '+91 98765 43210',
+  phone: '+91 9639626033',
   location: PERSONAL_INFO.location,
   linkedin: PERSONAL_INFO.links.linkedin,
   github: PERSONAL_INFO.links.github,
@@ -220,8 +220,8 @@ export const DEFAULT_RESUMES: ResumeRecord[] = [
 ];
 
 export const DEFAULT_SITE_SETTINGS: SiteSettingsData = {
-  siteTitle: 'Rudraksh Bansal | Software Developer & CSE Student',
-  metaDescription: 'Official portfolio of Rudraksh Bansal, Computer Science Student at AKTU specializing in Python, Web Development, and AI.',
+  siteTitle: 'Rudraksh Bansal | Software Developer & CSE Student(AI-ML)',
+  metaDescription: 'Official portfolio of Rudraksh Bansal, Computer Science Student(AI-ML) at AKTU specializing in Python, Web Development, and AI.',
   maintenanceMode: false,
   searchEngineIndexing: true,
   analyticsId: '',
@@ -993,7 +993,7 @@ export const portfolioService = {
           organization: item.organization || item.targetCompanyType,
           role_title: item.roleTitle,
           domain: item.preferredDomain,
-          start_date: item.period.split('–')[0]?.trim() || 'Summer 2026',
+          start_date: item.period.split('–')[0]?.trim() || 'Summer 2027',
           end_date: item.period.split('–')[1]?.trim() || 'Immediate Availability',
           description: item.description,
           responsibilities: item.responsibilities || [],
