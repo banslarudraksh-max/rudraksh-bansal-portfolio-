@@ -29,7 +29,7 @@ export const Hero: React.FC<HeroProps> = ({ onOpenResume, profile, heroProfile, 
   // Read dynamically from public.hero_profile, falling back gracefully to profile / constants
   const name = heroProfile?.name || profile?.name || PERSONAL_INFO.name;
   const badge = heroProfile?.badge || profile?.availabilityStatus || 'Available for Internships';
-  const headline = heroProfile?.headline || profile?.headline || 'B.Tech CSE Student & Aspiring Software Developer';
+  const headline = heroProfile?.headline || profile?.headline || 'B.Tech CSE Student(AI-ML) & Aspiring Software Developer';
   const description =
     heroProfile?.description ||
     profile?.introduction ||
@@ -200,7 +200,7 @@ print(f"Status: {dev.status}")`;
                         </div>
                       </div>
                       <div className="px-2 py-1 rounded-md bg-neutral-900 border border-neutral-800 text-[10px] font-mono text-neutral-300 shrink-0">
-                        AKTU '28
+                        AKTU '29
                       </div>
                     </div>
                   </div>
